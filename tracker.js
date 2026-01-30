@@ -11,9 +11,6 @@ const goLiveBtn = document.getElementById('go-live-btn');
 const liveStatusText = document.getElementById('live-status');
 const recentBlocked = document.getElementById('recent-blocked');
 const visitedDomainsList = document.getElementById('visited-domains-list');
-const trackerSearch = document.getElementById('tracker-search');
-const trackerCategoryFilter = document.getElementById('tracker-category-filter');
-const clearTrackerHistoryBtn = document.getElementById('clear-tracker-history');
 
 // State
 let updateInterval = null;
@@ -47,20 +44,6 @@ function setupEventListeners() {
   // Go Live button
   if (goLiveBtn) {
     goLiveBtn.addEventListener('click', toggleProtection);
-  }
-  
-  // Clear history button
-  if (clearTrackerHistoryBtn) {
-    clearTrackerHistoryBtn.addEventListener('click', clearHistory);
-  }
-  
-  // Search and filter
-  if (trackerSearch) {
-    trackerSearch.addEventListener('input', filterBlockedRequests);
-  }
-  
-  if (trackerCategoryFilter) {
-    trackerCategoryFilter.addEventListener('change', filterBlockedRequests);
   }
 }
 
@@ -258,35 +241,6 @@ function renderVisitedDomains(visitedDomains) {
   });
   
   visitedDomainsList.innerHTML = html;
-}
-
-// Filter Blocked Requests
-function filterBlockedRequests() {
-  // This would filter the displayed blocked requests based on search and category
-  // For now, we'll just reload the stats
-  loadTrackerStats();
-}
-
-// Clear History
-async function clearHistory() {
-  if (!confirm('Are you sure you want to clear all blocked history?')) {
-    return;
-  }
-  
-  try {
-    const response = await chrome.runtime.sendMessage({
-      action: 'CLEAR_STATS'
-    });
-    
-    if (response.success) {
-      console.log('✅ History cleared');
-      loadTrackerStats();
-    } else {
-      console.error('❌ Failed to clear history:', response.error);
-    }
-  } catch (error) {
-    console.error('❌ Error clearing history:', error);
-  }
 }
 
 // Get Time Ago
