@@ -7,6 +7,7 @@
 
 body {
   background: #0b0f14;
+  color: #e4f1f1;
 }
 .app {
   display: flex;
@@ -1125,6 +1126,7 @@ input:checked + .slider:before {
   flex: 1;
   padding: 30px;
   overflow-y: auto;
+  color: #e4f1f1;
 }
 
 .header-content {
