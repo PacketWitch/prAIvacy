@@ -1924,7 +1924,7 @@ input:checked + .slider:before {
 /* style.css */
 
 /* Clickable stat */
-#domains-stat {
+#domains-stat, #ads-stat, #trackers-stat {
   cursor: pointer;
   text-decoration: underline;
   text-decoration-style: dotted;
@@ -1932,7 +1932,7 @@ input:checked + .slider:before {
   transition: all 0.2s ease;
 }
 
-#domains-stat:hover {
+#domains-stat:hover, #ads-stat:hover, #trackers-stat:hover {
   color: #00f0ff;
   text-decoration-style: solid;
 }

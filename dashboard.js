@@ -70,7 +70,17 @@ function setupEventListeners() {
   
   // Domains stat click - show modal
   if (domainsStat) {
-    domainsStat.addEventListener('click', showDomainsModal);
+    domainsStat.addEventListener('click', () => showDomainsModal('all'));
+  }
+  
+  // Ads stat click - show modal with ads only
+  if (adsStat) {
+    adsStat.addEventListener('click', () => showDomainsModal('ads'));
+  }
+  
+  // Trackers stat click - show modal with trackers only
+  if (trackersStat) {
+    trackersStat.addEventListener('click', () => showDomainsModal('trackers'));
   }
   
   // Close modal button
@@ -157,12 +167,23 @@ async function toggleBlocking(enabled) {
 }
 
 // Show Domains Modal
-async function showDomainsModal() {
+async function showDomainsModal(filter = 'all') {
   const modal = document.getElementById('domains-modal');
   const tableBody = document.getElementById('domains-table-body');
+  const modalHeader = modal?.querySelector('.modal-header h2');
   
   if (!modal || !tableBody) {
     return;
+  }
+  
+  // Update modal title based on filter
+  if (modalHeader) {
+    const titles = {
+      'all': 'All Blocked Domains',
+      'ads': 'Blocked Ads',
+      'trackers': 'Blocked Trackers'
+    };
+    modalHeader.textContent = titles[filter] || 'All Blocked Domains';
   }
   
   // Show modal
@@ -178,7 +199,16 @@ async function showDomainsModal() {
     });
     
     if (response.success && response.data && response.data.blockedRequests) {
-      populateDomainsTable(response.data.blockedRequests);
+      // Filter domains based on filter type
+      let filteredDomains = response.data.blockedRequests;
+      
+      if (filter === 'ads') {
+        filteredDomains = response.data.blockedRequests.filter(d => d.category === 'ads');
+      } else if (filter === 'trackers') {
+        filteredDomains = response.data.blockedRequests.filter(d => d.category === 'trackers');
+      }
+      
+      populateDomainsTable(filteredDomains);
     } else {
       tableBody.innerHTML = '<tr><td colspan="4">No blocked domains found</td></tr>';
     }
