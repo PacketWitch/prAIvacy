@@ -286,7 +286,7 @@ function filterDomains() {
 }
 
 // Add Domain to Block
-async function addDomainToBlock() {
+async function addOrUnblockDomain() {
   const domain = addDomainInput?.value?.trim();
   
   if (!domain) {
