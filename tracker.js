@@ -1,408 +1,360 @@
-// tracker.js - Real-time tracker detection and blocking
+// tracker.js - Real-time tracker detection and blocking stats
 
-console.log('🔍 Tracker Detection Manager loaded');
+console.log('🔍 Tracker Detection page loaded');
 
-class TrackerManager {
-  constructor() {
-    this.isDetecting = false;
-    this.stats = {
-      scriptsScanned: 0,
-      trackersFound: 0,
-      cookiesBlocked: 0,
-      fingerprintingBlocked: 0
-    };
-    this.detectionRules = this.initDetectionRules();
-    this.init();
-  }
+// DOM Elements
+const totalBlockedStat = document.getElementById('total-blocked');
+const totalTrackersStat = document.getElementById('total-trackers');
+const totalAdsStat = document.getElementById('total-ads');
+const updateStatusStat = document.getElementById('update-status');
+const goLiveBtn = document.getElementById('go-live-btn');
+const liveStatusText = document.getElementById('live-status');
+const recentBlocked = document.getElementById('recent-blocked');
+const visitedDomainsList = document.getElementById('visited-domains-list');
+const trackerSearch = document.getElementById('tracker-search');
+const trackerCategoryFilter = document.getElementById('tracker-category-filter');
+const clearTrackerHistoryBtn = document.getElementById('clear-tracker-history');
 
-  initDetectionRules() {
-    return {
-      // Analytics trackers
-      analytics: [
-        'google-analytics.com',
-        'analytics.google.com',
-        'googletagmanager.com',
-        'mixpanel.com',
-        'segment.com',
-        'chartbeat.com',
-        'hotjar.com',
-        'fullstory.com',
-        'clarity.ms'
-      ],
-      // Social media trackers
-      social: [
-        'facebook.com/tr',
-        'connect.facebook.net',
-        'pixel.facebook.com',
-        'twitter.com/i/js',
-        'linkedin.com/li/track',
-        'instagram.com/static'
-      ],
-      // Ad trackers
-      advertising: [
-        'doubleclick.net',
-        'googlesyndication.com',
-        'googleadservices.com',
-        'amazon-adsystem.com',
-        'taboola.com',
-        'outbrain.com',
-        'rubiconproject.com',
-        'criteo.com',
-        'indexww.com'
-      ]
-    };
-  }
+// State
+let updateInterval = null;
+let isProtectionOn = false;
 
-  init() {
-    console.log('🚀 Initializing Tracker Manager...');
-    this.setupEventListeners();
-    this.startDetection();
-  }
-
-  setupEventListeners() {
-    const toggle = document.getElementById('detection-toggle');
-    const statusLabel = document.getElementById('detection-status');
+// Initialize
+async function initTrackerPage() {
+  console.log('🚀 Initializing Tracker Detection page...');
+  
+  try {
+    // Set up event listeners
+    setupEventListeners();
     
-    if (toggle && statusLabel) {
-      toggle.addEventListener('change', async (e) => {
-        const isDetecting = e.target.checked;
-        
-        if (isDetecting) {
-          statusLabel.textContent = 'Detecting';
-          statusLabel.className = 'power-label';
-          await this.enableDetection();
-        } else {
-          statusLabel.textContent = 'Disabled';
-          statusLabel.className = 'power-label disabled';
-          await this.disableDetection();
-        }
-      });
-    }
-  }
-
-  async enableDetection() {
-    this.isDetecting = true;
-    console.log('🔍 Tracker detection enabled');
-    await this.performDetection();
-  }
-
-  async disableDetection() {
-    this.isDetecting = false;
-    console.log('⚠ Tracker detection disabled');
-  }
-
-  startDetection() {
-    if (!this.isDetecting) return;
+    // Load initial protection state
+    await loadProtectionState();
     
-    // Scan page for trackers
-    this.scanPageTrackers();
+    // Load initial stats
+    await loadTrackerStats();
     
-    // Monitor new script loading
-    this.monitorScriptLoading();
+    // Start periodic updates
+    startAutoRefresh();
     
-    // Monitor network requests (if possible)
-    this.monitorNetworkRequests();
-  }
-
-  scanPageTrackers() {
-    console.log('🔍 Scanning page for existing trackers...');
-    
-    let trackersFound = 0;
-    const foundTrackers = new Set();
-    
-    // Check for common tracker patterns
-    this.detectionRules.analytics.forEach(domain => {
-      if (window.ga || window._gaq || document.querySelector(`script[src*="${domain}"]`)) {
-        foundTrackers.add(`Analytics: ${domain}`);
-        trackersFound++;
-      }
-    });
-
-    this.detectionRules.social.forEach(domain => {
-      if (window.fbq || document.querySelector(`script[src*="${domain}"]`)) {
-        foundTrackers.add(`Social: ${domain}`);
-        trackersFound++;
-      }
-    });
-
-    this.detectionRules.advertising.forEach(domain => {
-      if (document.querySelector(`iframe[src*="${domain}"]`)) {
-        foundTrackers.add(`Advertising: ${domain}`);
-        trackersFound++;
-      }
-    });
-
-    this.updateDetectionUI(foundTrackers, trackersFound);
-  }
-
-  monitorScriptLoading() {
-    const originalCreateElement = document.createElement;
-    
-    document.createElement = function(tagName, options) {
-      const element = originalCreateElement.call(this, tagName, options);
-      
-      if (tagName.toLowerCase() === 'script' && window.trackerManager) {
-        element.addEventListener('load', () => {
-          window.trackerManager.analyzeScript(element);
-        });
-      }
-      
-      return element;
-    };
-  }
-
-  analyzeScript(scriptElement) {
-    if (!this.isDetecting) return;
-    
-    const src = scriptElement.src || '';
-    const content = scriptElement.textContent || '';
-    
-    this.stats.scriptsScanned++;
-    
-    // Check against known tracker patterns
-    this.detectionRules.analytics.forEach(domain => {
-      if (src.includes(domain) || content.includes(domain)) {
-        this.stats.trackersFound++;
-        console.log(`🎯 Analytics tracker detected: ${domain}`);
-        this.updateTrackerList('analytics', domain, 'detected');
-      }
-    });
-  }
-
-  monitorNetworkRequests() {
-    // Try to intercept fetch requests
-    if (typeof fetch !== 'undefined') {
-      const originalFetch = window.fetch;
-      
-      window.fetch = function(...args) {
-        const url = args[0];
-        
-        if (window.trackerManager && window.trackerManager.isDetecting) {
-          window.trackerManager.analyzeFetchRequest(url);
-        }
-        
-        return originalFetch.apply(this, args);
-      };
-    }
-  }
-
-  analyzeFetchRequest(url) {
-    try {
-      const urlObj = new URL(url);
-      const domain = urlObj.hostname;
-      
-      // Check if request is to known tracker domain
-      this.detectionRules.analytics.forEach(trackerDomain => {
-        if (domain.includes(trackerDomain)) {
-          console.log(`🎯 Analytics request detected: ${domain}`);
-          this.updateTrackerList('analytics', domain, 'detected');
-        }
-      });
-    } catch (error) {
-      console.log('Error analyzing request:', error);
-    }
-  }
-
-  updateDetectionUI(foundTrackers, trackersFound) {
-    // Update scan stats
-    document.getElementById('scripts-scanned').textContent = this.stats.scriptsScanned;
-    document.getElementById('trackers-found').textContent = trackersFound;
-    
-    // Update tracker lists
-    const socialTrackers = document.getElementById('social-trackers');
-    const analyticsTrackers = document.getElementById('analytics-trackers');
-    const adTrackers = document.getElementById('ad-trackers');
-    
-    if (socialTrackers) {
-      socialTrackers.innerHTML = '';
-      foundTrackers.forEach(tracker => {
-        if (tracker.includes('Social:')) {
-          const div = document.createElement('div');
-          div.className = 'tracker-item';
-          div.innerHTML = `
-            <span class="tracker-name">${tracker.replace('Social: ', '')}</span>
-            <span class="tracker-status detected">Detected</span>
-          `;
-          socialTrackers.appendChild(div);
-        }
-      });
-    }
-  }
-
-  updateTrackerList(category, domain, status) {
-    // Send to background script for consistent tracking
-    if (chrome && chrome.runtime) {
-      chrome.runtime.sendMessage({
-        action: 'TRACKER_DETECTED',
-        data: {
-          category,
-          domain,
-          status,
-          timestamp: Date.now(),
-          url: window.location.href
-        }
-      });
-    }
-  }
-
-  async performDetection() {
-    if (!this.isDetecting) return;
-    
-    console.log('🔍 Performing comprehensive tracker detection...');
-    
-    // Scan current page
-    this.scanPageTrackers();
-    
-    // Wait a bit and scan again (for dynamically loaded content)
-    setTimeout(() => {
-      this.scanPageTrackers();
-      this.updateFeed();
-    }, 2000);
-  }
-
-  updateFeed() {
-    const feed = document.getElementById('tracker-feed');
-    if (!feed) return;
-    
-    // Get recent tracker activity from background
-    if (chrome && chrome.runtime) {
-      chrome.runtime.sendMessage({ action: 'GET_RECENT_TRACKERS' }, (response) => {
-        if (response && response.success) {
-          this.displayRecentActivity(response.data, feed);
-        }
-      });
-    }
-  }
-
-  displayRecentActivity(activities, feedElement) {
-    if (!activities || activities.length === 0) {
-      feedElement.innerHTML = '<div class="loading">No recent tracker activity detected</div>';
-      return;
-    }
-    
-    feedElement.innerHTML = '';
-    activities.slice(-10).reverse().forEach(activity => {
-      const div = document.createElement('div');
-      div.className = 'activity-item';
-      div.innerHTML = `
-        <div class="activity-header">
-          <span class="activity-type ${activity.category}">${activity.category.toUpperCase()}</span>
-          <span class="activity-time">${new Date(activity.timestamp).toLocaleTimeString()}</span>
-        </div>
-        <div class="activity-details">
-          <strong>${activity.domain}</strong>
-          <span class="activity-status ${activity.status}">${activity.status}</span>
-        </div>
-      `;
-      feedElement.appendChild(div);
-    });
+    console.log('✅ Tracker Detection page initialized successfully');
+  } catch (error) {
+    console.error('❌ Tracker Detection page initialization error:', error);
   }
 }
 
-// VISITED DOMAINS MANAGER
-class VisitedDomainsManager {
-  constructor() {
-    this.visitedDomains = [];
-    this.init();
+// Setup Event Listeners
+function setupEventListeners() {
+  // Go Live button
+  if (goLiveBtn) {
+    goLiveBtn.addEventListener('click', toggleProtection);
   }
-
-  init() {
-    console.log('🌐 Initializing Visited Domains Manager...');
-    this.loadVisitedDomains();
-    
-    // Check for new data every 500ms
-    setInterval(() => this.checkForNewData(), 500);
+  
+  // Clear history button
+  if (clearTrackerHistoryBtn) {
+    clearTrackerHistoryBtn.addEventListener('click', clearHistory);
   }
-
-  async checkForNewData() {
-    try {
-      const data = await chrome.storage.local.get(['visitedDomains']);
-      const currentVisited = data.visitedDomains || [];
-
-      if (currentVisited.length !== this.previousVisitedCount) {
-        console.log('🔄 New visited domains detected!');
-        this.previousVisitedCount = currentVisited.length;
-        this.visitedDomains = currentVisited;
-        this.renderVisitedDomainsList(currentVisited);
-      }
-    } catch (error) {
-      console.error('⚠️ Update check failed:', error);
-    }
+  
+  // Search and filter
+  if (trackerSearch) {
+    trackerSearch.addEventListener('input', filterBlockedRequests);
   }
-
-  async loadVisitedDomains() {
-    try {
-      const data = await chrome.storage.local.get(['visitedDomains']);
-      this.visitedDomains = data.visitedDomains || [];
-      this.previousVisitedCount = this.visitedDomains.length;
-
-      console.log('📦 Loaded visited domains:', this.visitedDomains.length);
-      this.renderVisitedDomainsList(this.visitedDomains);
-    } catch (error) {
-      console.error('❌ Load failed:', error);
-    }
-  }
-
-  renderVisitedDomainsList(visitedDomains) {
-    const container = document.getElementById('visited-domains-list');
-    if (!container) return;
-
-    console.log('🎨 Rendering visited domains:', visitedDomains.length);
-
-    if (visitedDomains.length === 0) {
-      container.innerHTML = `
-        <div class="no-data-message">
-          <p>No visited domains yet. Start browsing!</p>
-        </div>
-      `;
-      return;
-    }
-
-    // Sort by last visited (most recent first)
-    const sortedDomains = [...visitedDomains].sort((a, b) => b.lastVisited - a.lastVisited);
-
-    container.innerHTML = sortedDomains.slice(0, 10).map((domain, index) => {
-      const lastVisited = new Date(domain.lastVisited);
-      const timeAgo = this.getTimeAgo(domain.lastVisited);
-
-      return `
-        <div class="visited-domain-item" style="animation: slideIn 0.5s ease;">
-          <div class="domain-main">
-            <div class="domain-info">
-              <span class="domain-name">${domain.domain}</span>
-              <span class="domain-badge visits">${domain.visitCount} visits</span>
-            </div>
-            <div class="domain-actions">
-              <span class="domain-time">${timeAgo}</span>
-            </div>
-          </div>
-          <div class="domain-details">
-            <span class="domain-title">${domain.title || 'Unknown Title'}</span>
-          </div>
-        </div>
-      `;
-    }).join('');
-
-    console.log('✅ Visited domains rendered!');
-  }
-
-  getTimeAgo(timestamp) {
-    const now = Date.now();
-    const diff = now - timestamp;
-    const minutes = Math.floor(diff / (1000 * 60));
-    const hours = Math.floor(diff / (1000 * 60 * 60));
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-
-    if (minutes < 1) return 'Just now';
-    if (minutes < 60) return `${minutes}m ago`;
-    if (hours < 24) return `${hours}h ago`;
-    return `${days}d ago`;
+  
+  if (trackerCategoryFilter) {
+    trackerCategoryFilter.addEventListener('change', filterBlockedRequests);
   }
 }
 
-// Initialize when DOM is ready
-document.addEventListener('DOMContentLoaded', () => {
-  console.log('🔍 Tracker Detection page loaded');
-  window.trackerManager = new TrackerManager();
-  window.visitedManager = new VisitedDomainsManager();
-});
+// Load Protection State
+async function loadProtectionState() {
+  try {
+    const response = await chrome.runtime.sendMessage({
+      action: 'GET_STATS'
+    });
+    
+    if (response.success && response.data && response.data.stats) {
+      const enabled = response.data.stats.protectionEnabled !== false;
+      updateProtectionUI(enabled);
+    }
+  } catch (error) {
+    console.error('❌ Error loading protection state:', error);
+  }
+}
+
+// Toggle Protection
+async function toggleProtection() {
+  const newState = !isProtectionOn;
+  
+  try {
+    const response = await chrome.runtime.sendMessage({
+      action: 'toggleBlocking',
+      enabled: newState
+    });
+    
+    if (response.success) {
+      isProtectionOn = newState;
+      updateProtectionUI(newState);
+      console.log('✅ Protection toggled:', newState);
+    } else {
+      console.error('❌ Failed to toggle protection:', response.error);
+    }
+  } catch (error) {
+    console.error('❌ Error toggling protection:', error);
+  }
+}
+
+// Update Protection UI
+function updateProtectionUI(enabled) {
+  if (goLiveBtn) {
+    goLiveBtn.textContent = enabled ? 'Stop Live' : 'Go Live';
+    goLiveBtn.className = enabled ? 'btn-live btn-live-active' : 'btn-live';
+  }
+  
+  if (liveStatusText) {
+    liveStatusText.textContent = enabled ? 'Protection On' : 'Protection Off';
+    liveStatusText.className = 'live-status-text ' + (enabled ? 'live-on' : 'live-off');
+  }
+}
+
+// Load Tracker Stats
+async function loadTrackerStats() {
+  try {
+    const response = await chrome.runtime.sendMessage({
+      action: 'GET_STATS'
+    });
+    
+    if (response.success && response.data) {
+      updateStatsDisplay(response.data.stats);
+      updateRecentBlocked(response.data.blockedRequests || []);
+      updateVisitedDomains();
+      console.log('✅ Tracker stats loaded:', response.data.stats);
+    }
+  } catch (error) {
+    console.error('❌ Error loading tracker stats:', error);
+  }
+}
+
+// Update Stats Display
+function updateStatsDisplay(stats) {
+  if (!stats) {
+    return;
+  }
+  
+  // Update total blocked
+  if (totalBlockedStat) {
+    const totalBlocked = stats.blockedCount || 0;
+    totalBlockedStat.textContent = totalBlocked;
+    animateNumber(totalBlockedStat, totalBlocked);
+  }
+  
+  // Update trackers blocked
+  if (totalTrackersStat) {
+    const trackerCount = stats.trackerCount || 0;
+    totalTrackersStat.textContent = trackerCount;
+    animateNumber(totalTrackersStat, trackerCount);
+  }
+  
+  // Update ads blocked
+  if (totalAdsStat) {
+    const adCount = stats.adCount || 0;
+    totalAdsStat.textContent = adCount;
+    animateNumber(totalAdsStat, adCount);
+  }
+}
+
+// Update Recent Blocked
+function updateRecentBlocked(blockedRequests) {
+  if (!recentBlocked) {
+    return;
+  }
+  
+  if (!blockedRequests || blockedRequests.length === 0) {
+    recentBlocked.innerHTML = `
+      <div class="loading-state">
+        <p>No blocked requests yet. Start browsing!</p>
+      </div>
+    `;
+    return;
+  }
+  
+  // Sort by blockedAt descending (most recent first)
+  const sortedRequests = [...blockedRequests].sort((a, b) => (b.blockedAt || 0) - (a.blockedAt || 0));
+  
+  let html = '';
+  sortedRequests.slice(0, 20).forEach(request => {
+    const category = request.category || 'unknown';
+    const icon = category === 'ads' ? '🛑' : category === 'trackers' ? '🕵️' : '⚠️';
+    const timeAgo = getTimeAgo(request.blockedAt);
+    const sourceWebsite = request.sourceWebsite || 'Unknown';
+    
+    html += `
+      <div class="blocked-request-item">
+        <div class="request-header">
+          <span class="request-icon">${icon}</span>
+          <div class="request-info">
+            <strong class="request-domain">${request.domain}</strong>
+            <span class="request-time">${timeAgo}</span>
+          </div>
+        </div>
+        <div class="request-details">
+          <span class="request-source">From: ${sourceWebsite}</span>
+          <span class="request-category">${category.toUpperCase()}</span>
+        </div>
+      </div>
+    `;
+  });
+  
+  recentBlocked.innerHTML = html;
+}
+
+// Update Visited Domains
+async function updateVisitedDomains() {
+  try {
+    const response = await chrome.runtime.sendMessage({
+      action: 'GET_VISITED_DOMAINS'
+    });
+    
+    if (response.success && response.data) {
+      renderVisitedDomains(response.data);
+    }
+  } catch (error) {
+    console.error('❌ Error loading visited domains:', error);
+  }
+}
+
+// Render Visited Domains
+function renderVisitedDomains(visitedDomains) {
+  if (!visitedDomainsList) {
+    return;
+  }
+  
+  if (!visitedDomains || visitedDomains.length === 0) {
+    visitedDomainsList.innerHTML = `
+      <div class="loading-state">
+        <p>No visited domains yet. Start browsing!</p>
+      </div>
+    `;
+    return;
+  }
+  
+  // Sort by lastSeen descending (most recent first)
+  const sortedDomains = [...visitedDomains].sort((a, b) => (b.lastSeen || 0) - (a.lastSeen || 0));
+  
+  let html = '';
+  sortedDomains.slice(0, 10).forEach(domain => {
+    const timeAgo = getTimeAgo(domain.lastSeen);
+    const visitCount = domain.visitCount || 1;
+    
+    html += `
+      <div class="visited-domain-item">
+        <div class="domain-main">
+          <div class="domain-info">
+            <span class="domain-name">${domain.domain}</span>
+            <span class="domain-badge visits">${visitCount} visits</span>
+          </div>
+          <div class="domain-time">${timeAgo}</div>
+        </div>
+      </div>
+    `;
+  });
+  
+  visitedDomainsList.innerHTML = html;
+}
+
+// Filter Blocked Requests
+function filterBlockedRequests() {
+  // This would filter the displayed blocked requests based on search and category
+  // For now, we'll just reload the stats
+  loadTrackerStats();
+}
+
+// Clear History
+async function clearHistory() {
+  if (!confirm('Are you sure you want to clear all blocked history?')) {
+    return;
+  }
+  
+  try {
+    const response = await chrome.runtime.sendMessage({
+      action: 'CLEAR_STATS'
+    });
+    
+    if (response.success) {
+      console.log('✅ History cleared');
+      loadTrackerStats();
+    } else {
+      console.error('❌ Failed to clear history:', response.error);
+    }
+  } catch (error) {
+    console.error('❌ Error clearing history:', error);
+  }
+}
+
+// Get Time Ago
+function getTimeAgo(timestamp) {
+  const now = Date.now();
+  const diff = now - timestamp;
+  const minutes = Math.floor(diff / 60000);
+  const hours = Math.floor(diff / 3600000);
+  const days = Math.floor(diff / 86400000);
+  
+  if (minutes < 1) return 'Just now';
+  if (minutes < 60) return `${minutes}m ago`;
+  if (hours < 24) return `${hours}h ago`;
+  return `${days}d ago`;
+}
+
+// Animate Number
+function animateNumber(element, target) {
+  const current = parseInt(element.textContent) || 0;
+  if (current === target) {
+    return;
+  }
+  
+  const duration = 500;
+  const steps = 20;
+  const increment = (target - current) / steps;
+  let step = 0;
+  
+  const interval = setInterval(() => {
+    step++;
+    const value = Math.round(current + (increment * step));
+    element.textContent = value;
+    
+    if (step >= steps) {
+      clearInterval(interval);
+      element.textContent = target;
+    }
+  }, duration / steps);
+}
+
+// Start Auto Refresh
+function startAutoRefresh() {
+  if (updateInterval) {
+    clearInterval(updateInterval);
+  }
+  
+  // Update every 2 seconds
+  updateInterval = setInterval(() => {
+    loadTrackerStats();
+  }, 2000);
+}
+
+// Stop Auto Refresh
+function stopAutoRefresh() {
+  if (updateInterval) {
+    clearInterval(updateInterval);
+    updateInterval = null;
+  }
+}
+
+// Initialize on DOM ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initTrackerPage);
+} else {
+  initTrackerPage();
+}
+
+// Cleanup on page unload
+window.addEventListener('beforeunload', stopAutoRefresh);
+
+console.log('✅ Tracker Detection script loaded');

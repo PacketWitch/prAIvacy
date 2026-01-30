@@ -2110,4 +2110,142 @@ input:checked + .slider:before {
   background: #2a3a4d;
 }
 
+/* Live Control Styles */
+.live-control {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding: 20px;
+}
+
+.btn-live {
+  background: linear-gradient(135deg, #1e2a38 0%, #2a3a4d 100%);
+  color: #ffffff;
+  border: 2px solid #00f0ff;
+  padding: 12px 40px;
+  border-radius: 30px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.btn-live:hover {
+  background: linear-gradient(135deg, #00f0ff 0%, #00ff9c 100%);
+  color: #0b0f14;
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px rgba(0, 240, 255, 0.3);
+}
+
+.btn-live-active {
+  background: linear-gradient(135deg, #ff6b6b 0%, #ff5252 100%);
+  border-color: #ff6b6b;
+}
+
+.btn-live-active:hover {
+  background: linear-gradient(135deg, #ff5252 0%, #ff3838 100%);
+  box-shadow: 0 10px 30px rgba(255, 107, 107, 0.3);
+}
+
+.live-status-text {
+  font-size: 16px;
+  font-weight: bold;
+  padding: 8px 20px;
+  border-radius: 20px;
+  transition: all 0.3s ease;
+}
+
+.live-status-text.live-on {
+  background: rgba(0, 255, 156, 0.2);
+  color: #00ff9c;
+  border: 2px solid #00ff9c;
+}
+
+.live-status-text.live-off {
+  background: rgba(255, 107, 107, 0.2);
+  color: #ff6b6b;
+  border: 2px solid #ff6b6b;
+}
+
+/* Blocked Request Item Styles */
+.blocked-request-item {
+  background: rgba(30, 42, 56, 0.5);
+  border: 1px solid #1e2a38;
+  border-radius: 12px;
+  padding: 15px;
+  margin-bottom: 12px;
+  transition: all 0.2s ease;
+}
+
+.blocked-request-item:hover {
+  background: rgba(30, 42, 56, 0.8);
+  border-color: #00f0ff;
+  transform: translateX(5px);
+}
+
+.request-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.request-icon {
+  font-size: 24px;
+}
+
+.request-info {
+  flex: 1;
+}
+
+.request-domain {
+  display: block;
+  font-size: 15px;
+  color: #ffffff;
+  margin-bottom: 4px;
+}
+
+.request-time {
+  font-size: 12px;
+  color: #9caab8;
+}
+
+.request-details {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-left: 36px;
+  font-size: 12px;
+}
+
+.request-source {
+  color: #9caab8;
+}
+
+.request-category {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-weight: bold;
+  text-transform: uppercase;
+  font-size: 11px;
+}
+
+.request-category.ADS {
+  background: rgba(255, 107, 107, 0.2);
+  color: #ff6b6b;
+}
+
+.request-category.TRACKERS {
+  background: rgba(0, 240, 255, 0.2);
+  color: #00f0ff;
+}
+
+.request-category.UNKNOWN {
+  background: rgba(255, 193, 7, 0.2);
+  color: #ffc107;
+}
+
 
