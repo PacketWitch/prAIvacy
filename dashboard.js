@@ -290,9 +290,22 @@ async function updatePrivacyScore(stats) {
   }
   
   try {
-    // Calculate privacy score
+    // Calculate privacy score with default settings
+    const defaultSettings = {
+      blockingLevel: 'moderate', // Base score of 40 points
+      privacyControls: {
+        'block-ads': true, // +15 points
+        'block-trackers': true, // +15 points
+        'prevent-cross-site': true // +20 points
+      },
+      advancedSettings: {
+        'fingerprint-protection': false, // +15 points (disabled for now)
+        'auto-sync': false
+      }
+    };
+    
     const scoreResult = await window.privacyScoreEngine.calculatePrivacyScore(
-      {}, // Settings - can be loaded from storage if needed
+      defaultSettings,
       {
         blockedCount: stats.blockedCount || 0,
         adCount: stats.adCount || 0,

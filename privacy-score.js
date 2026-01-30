@@ -114,15 +114,18 @@ class PrivacyScoreEngine {
         
         // Score based on number of blocked items
         if (stats.blockedCount) {
-            usageScore += Math.min(stats.blockedCount * 0.5, 10);
+            // Increased cap from 10 to 30 for better scoring with high block counts
+            usageScore += Math.min(stats.blockedCount * 0.1, 30);
         }
         
         if (stats.adCount) {
-            usageScore += Math.min(stats.adCount * 0.7, 15);
+            // Increased cap from 15 to 25
+            usageScore += Math.min(stats.adCount * 0.15, 25);
         }
         
         if (stats.trackerCount) {
-            usageScore += Math.min(stats.trackerCount * 0.8, 20);
+            // Increased cap from 20 to 30
+            usageScore += Math.min(stats.trackerCount * 0.2, 30);
         }
 
         return Math.round(usageScore);
