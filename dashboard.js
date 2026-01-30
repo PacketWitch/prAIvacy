@@ -10,6 +10,11 @@ const activityList = document.getElementById('activity-list');
 const protectionToggle = document.getElementById('protection-toggle');
 const powerStatus = document.getElementById('power-status');
 
+// Make privacy score clickable if it's a link
+if (privacyScoreStat && privacyScoreStat.tagName === 'A') {
+  privacyScoreStat.classList.add('clickable-stat');
+}
+
 // State
 let updateInterval = null;
 let protectionStateLoaded = false;

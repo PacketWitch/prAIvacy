@@ -1,421 +1,390 @@
-class PrivacyReportManager {
-    constructor() {
-        this.scoreEngine = window.privacyScoreEngine;
-        this.reportData = null;
-        this.init();
-    }
+// report.js - Privacy Report page
 
-    async init() {
-        await this.loadReportData();
-        this.setupEventListeners();
-        this.renderReport();
-        this.startAutoRefresh();
-    }
+console.log('📊 Privacy Report page loaded');
 
-    async loadReportData() {
-        try {
-            // Get comprehensive report from score engine
-            this.reportData = await this.scoreEngine.getComprehensiveReport();
-        } catch (error) {
-            console.error('Error loading report data:', error);
-            this.reportData = this.getDefaultReportData();
-        }
-    }
+// DOM Elements
+const reportScoreElement = document.getElementById('report-score');
+const scoreDescriptionElement = document.getElementById('score-description');
+const totalTrackersElement = document.getElementById('total-trackers');
+const totalAdsElement = document.getElementById('total-ads');
+const crossSiteElement = document.getElementById('cross-site');
+const dataSavedElement = document.getElementById('data-saved');
+const dayTrackersElement = document.getElementById('day-trackers');
+const dayAdsElement = document.getElementById('day-ads');
+const weekTrackersElement = document.getElementById('week-trackers');
+const weekAdsElement = document.getElementById('week-ads');
+const monthTrackersElement = document.getElementById('month-trackers');
+const monthAdsElement = document.getElementById('month-ads');
+const topDomainsElement = document.getElementById('top-domains');
+const refreshInsightsBtn = document.getElementById('refresh-insights');
+const exportPdfBtn = document.getElementById('export-pdf');
+const exportCsvBtn = document.getElementById('export-csv');
+const shareReportBtn = document.getElementById('share-report');
 
-    getDefaultReportData() {
-        return {
-            current: {
-                score: 50,
-                grade: 'C',
-                factors: {},
-                recommendations: []
-            },
-            historical: [],
-            trend: 'stable',
-            summary: {
-                score: 50,
-                grade: 'C',
-                level: 'Fair',
-                trend: 'stable',
-                description: 'Your privacy protection is Fair and stable.'
-            }
-        };
-    }
+// State
+let updateInterval = null;
+let reportData = null;
 
-    setupEventListeners() {
-        const refreshBtn = document.getElementById('refresh-report');
-        if (refreshBtn) {
-            refreshBtn.addEventListener('click', () => this.refreshReport());
-        }
-
-        const exportBtn = document.getElementById('export-report');
-        if (exportBtn) {
-            exportBtn.addEventListener('click', () => this.exportReport());
-        }
-
-        const periodSelect = document.getElementById('report-period');
-        if (periodSelect) {
-            periodSelect.addEventListener('change', (e) => this.changePeriod(e.target.value));
-        }
-    }
-
-    renderReport() {
-        this.renderPrivacyScore();
-        this.renderStatistics();
-        this.renderTrendChart();
-        this.renderRecommendations();
-        this.renderDetailedBreakdown();
-    }
-
-    renderPrivacyScore() {
-        const scoreElement = document.getElementById('report-score');
-        const descriptionElement = document.getElementById('score-description');
-        const gradeElement = document.getElementById('score-grade');
-        const trendElement = document.getElementById('score-trend');
-
-        if (this.reportData.current && scoreElement) {
-            const { score, grade } = this.reportData.current;
-            const { level, trend, color } = this.reportData.summary;
-
-            scoreElement.textContent = `${score}%`;
-            scoreElement.style.color = color;
-            
-            if (descriptionElement) {
-                descriptionElement.textContent = this.scoreEngine.getScoreDescription(level, trend);
-            }
-
-            if (gradeElement) {
-                gradeElement.textContent = grade;
-                gradeElement.style.color = color;
-            }
-
-            if (trendElement) {
-                const trendIcon = this.getTrendIcon(trend);
-                trendElement.innerHTML = `${trendIcon} ${trend}`;
-                trendElement.style.color = this.getTrendColor(trend);
-            }
-        }
-    }
-
-    renderStatistics() {
-        // Get actual stats from storage
-        chrome.storage.local.get([
-            'blockedCount', 'adCount', 'trackerCount', 'blockedRequests'
-        ], (data) => {
-            const stats = {
-                blockedCount: data.blockedCount || 0,
-                adCount: data.adCount || 0,
-                trackerCount: data.trackerCount || 0,
-                recentRequests: (data.blockedRequests || []).slice(-10).length
-            };
-
-            this.updateStatDisplay('total-blocked', stats.blockedCount);
-            this.updateStatDisplay('total-ads', stats.adCount);
-            this.updateStatDisplay('total-trackers', stats.trackerCount);
-            this.updateStatDisplay('recent-requests', stats.recentRequests);
-        });
-    }
-
-    updateStatDisplay(elementId, value) {
-        const element = document.getElementById(elementId);
-        if (element) {
-            element.textContent = this.formatNumber(value);
-        }
-    }
-
-    formatNumber(num) {
-        if (num >= 1000) {
-            return (num / 1000).toFixed(1) + 'k';
-        }
-        return num.toString();
-    }
-
-    renderTrendChart() {
-        const chartContainer = document.getElementById('trend-chart');
-        if (!chartContainer || !this.reportData.historical.length) return;
-
-        const canvas = document.createElement('canvas');
-        canvas.width = chartContainer.offsetWidth;
-        canvas.height = 200;
-        chartContainer.innerHTML = '';
-        chartContainer.appendChild(canvas);
-
-        this.drawTrendChart(canvas, this.reportData.historical);
-    }
-
-    drawTrendChart(canvas, scores) {
-        const ctx = canvas.getContext('2d');
-        const width = canvas.width;
-        const height = canvas.height;
-        const padding = 40;
-
-        // Clear canvas
-        ctx.clearRect(0, 0, width, height);
-
-        if (scores.length < 2) {
-            ctx.fillStyle = '#9fb3c8';
-            ctx.font = '14px Segoe UI';
-            ctx.textAlign = 'center';
-            ctx.fillText('Insufficient data for trend chart', width / 2, height / 2);
-            return;
-        }
-
-        // Prepare data points
-        const maxScore = 100;
-        const minScore = 0;
-        const xStep = (width - 2 * padding) / (scores.length - 1);
-        const yScale = (height - 2 * padding) / (maxScore - minScore);
-
-        // Draw grid lines
-        ctx.strokeStyle = '#1e2a38';
-        ctx.lineWidth = 1;
-        
-        for (let i = 0; i <= 4; i++) {
-            const y = padding + (i * (height - 2 * padding) / 4);
-            ctx.beginPath();
-            ctx.moveTo(padding, y);
-            ctx.lineTo(width - padding, y);
-            ctx.stroke();
-            
-            // Y-axis labels
-            ctx.fillStyle = '#9fb3c8';
-            ctx.font = '12px Segoe UI';
-            ctx.textAlign = 'right';
-            ctx.fillText(100 - (i * 25), padding - 10, y + 4);
-        }
-
-        // Draw trend line
-        ctx.strokeStyle = '#00f0ff';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-
-        scores.forEach((scoreData, index) => {
-            const x = padding + (index * xStep);
-            const y = padding + ((100 - scoreData.score) * yScale);
-            
-            if (index === 0) {
-                ctx.moveTo(x, y);
-            } else {
-                ctx.lineTo(x, y);
-            }
-        });
-
-        ctx.stroke();
-
-        // Draw data points
-        scores.forEach((scoreData, index) => {
-            const x = padding + (index * xStep);
-            const y = padding + ((100 - scoreData.score) * yScale);
-            
-            ctx.fillStyle = this.scoreEngine.getPrivacyColor(scoreData.score);
-            ctx.beginPath();
-            ctx.arc(x, y, 4, 0, 2 * Math.PI);
-            ctx.fill();
-            
-            // Add hover effect with score value
-            ctx.fillStyle = '#0b0f14';
-            ctx.fillRect(x - 20, y - 25, 40, 18);
-            ctx.fillStyle = '#e4f1f1';
-            ctx.font = '10px Segoe UI';
-            ctx.textAlign = 'center';
-            ctx.fillText(scoreData.score, x, y - 12);
-        });
-    }
-
-    renderRecommendations() {
-        const container = document.getElementById('recommendations-container');
-        if (!container) return;
-
-        const recommendations = this.reportData.current.recommendations || [];
-        
-        if (recommendations.length === 0) {
-            container.innerHTML = `
-                <div class="no-recommendations">
-                    <p>🎉 Great job! Your privacy settings are well configured.</p>
-                </div>
-            `;
-            return;
-        }
-
-        container.innerHTML = recommendations.map(rec => `
-            <div class="recommendation-item ${rec.type}">
-                <div class="recommendation-header">
-                    <span class="recommendation-title">${rec.title}</span>
-                    <span class="recommendation-type">${rec.type}</span>
-                </div>
-                <p class="recommendation-description">${rec.description}</p>
-                <div class="recommendation-action">
-                    <strong>Action:</strong> ${rec.action}
-                </div>
-            </div>
-        `).join('');
-    }
-
-    renderDetailedBreakdown() {
-        const container = document.getElementById('breakdown-container');
-        if (!container || !this.reportData.current.factors) return;
-
-        const factors = this.reportData.current.factors;
-        const breakdown = this.generateBreakdown(factors);
-
-        container.innerHTML = breakdown.map(item => `
-            <div class="breakdown-item">
-                <div class="breakdown-label">${item.label}</div>
-                <div class="breakdown-value">
-                    <span class="breakdown-score">+${item.score}</span>
-                    <div class="breakdown-bar">
-                        <div class="breakdown-fill" style="width: ${item.percentage}%"></div>
-                    </div>
-                </div>
-            </div>
-        `).join('');
-    }
-
-    generateBreakdown(factors) {
-        const items = [];
-
-        if (factors.blockingLevel) {
-            items.push({
-                label: `Blocking Level (${factors.blockingLevel.value})`,
-                score: factors.blockingLevel.score,
-                percentage: (factors.blockingLevel.score / 60) * 100
-            });
-        }
-
-        if (factors.blockedAds) {
-            items.push({
-                label: 'Ad Blocking',
-                score: factors.blockedAds.score,
-                percentage: (factors.blockedAds.score / 15) * 100
-            });
-        }
-
-        if (factors.blockedTrackers) {
-            items.push({
-                label: 'Tracker Blocking',
-                score: factors.blockedTrackers.score,
-                percentage: (factors.blockedTrackers.score / 15) * 100
-            });
-        }
-
-        if (factors.blockedCrossSite) {
-            items.push({
-                label: 'Cross-Site Protection',
-                score: factors.blockedCrossSite.score,
-                percentage: (factors.blockedCrossSite.score / 20) * 100
-            });
-        }
-
-        if (factors.fingerprintProtection) {
-            items.push({
-                label: 'Fingerprint Protection',
-                score: factors.fingerprintProtection.score,
-                percentage: (factors.fingerprintProtection.score / 15) * 100
-            });
-        }
-
-        if (factors.usageStats) {
-            items.push({
-                label: 'Usage Activity',
-                score: factors.usageStats.score,
-                percentage: Math.min((factors.usageStats.score / 45) * 100, 100)
-            });
-        }
-
-        return items.sort((a, b) => b.score - a.score);
-    }
-
-    getTrendIcon(trend) {
-        switch (trend) {
-            case 'improving': return '📈';
-            case 'declining': return '📉';
-            case 'stable': return '➡️';
-            default: return '❓';
-        }
-    }
-
-    getTrendColor(trend) {
-        switch (trend) {
-            case 'improving': return '#00ff9c';
-            case 'declining': return '#ff6b6b';
-            case 'stable': return '#00f0ff';
-            default: return '#9fb3c8';
-        }
-    }
-
-    async refreshReport() {
-        const refreshBtn = document.getElementById('refresh-report');
-        if (refreshBtn) {
-            refreshBtn.textContent = 'Refreshing...';
-            refreshBtn.disabled = true;
-        }
-
-        await this.loadReportData();
-        this.renderReport();
-
-        if (refreshBtn) {
-            refreshBtn.textContent = 'Refresh Report';
-            refreshBtn.disabled = false;
-        }
-    }
-
-    exportReport() {
-        const exportData = {
-            report: this.reportData,
-            timestamp: new Date().toISOString(),
-            version: chrome.runtime.getManifest().version
-        };
-
-        const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `prAIvacy-privacy-report-${new Date().toISOString().split('T')[0]}.json`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-
-        this.showNotification('Privacy report exported successfully', 'success');
-    }
-
-    changePeriod(period) {
-        // This would filter historical data based on period
-        // For now, just refresh the current view
-        this.refreshReport();
-    }
-
-    startAutoRefresh() {
-        // Refresh report every 5 minutes
-        setInterval(() => {
-            this.refreshReport();
-        }, 5 * 60 * 1000);
-    }
-
-    showNotification(message, type = 'info') {
-        const notification = document.createElement('div');
-        notification.className = `notification notification-${type}`;
-        notification.textContent = message;
-        
-        document.body.appendChild(notification);
-        
-        setTimeout(() => {
-            notification.classList.add('show');
-        }, 100);
-        
-        setTimeout(() => {
-            notification.classList.remove('show');
-            setTimeout(() => {
-                if (document.body.contains(notification)) {
-                    document.body.removeChild(notification);
-                }
-            }, 300);
-        }, 3000);
-    }
+// Initialize
+async function initReportPage() {
+  console.log('🚀 Initializing Privacy Report page...');
+  
+  try {
+    // Set up event listeners
+    setupEventListeners();
+    
+    // Load initial data
+    await loadReportData();
+    
+    // Start periodic updates
+    startAutoRefresh();
+    
+    console.log('✅ Privacy Report page initialized successfully');
+  } catch (error) {
+    console.error('❌ Privacy Report page initialization error:', error);
+  }
 }
 
-// Initialize when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
-    window.privacyReportManager = new PrivacyReportManager();
-});
+// Setup Event Listeners
+function setupEventListeners() {
+  // Refresh insights button
+  if (refreshInsightsBtn) {
+    refreshInsightsBtn.addEventListener('click', refreshReport);
+  }
+  
+  // Export PDF button
+  if (exportPdfBtn) {
+    exportPdfBtn.addEventListener('click', exportReportAsPdf);
+  }
+  
+  // Export CSV button
+  if (exportCsvBtn) {
+    exportCsvBtn.addEventListener('click', exportReportAsCsv);
+  }
+  
+  // Share report button
+  if (shareReportBtn) {
+    shareReportBtn.addEventListener('click', shareReport);
+  }
+}
+
+// Load Report Data
+async function loadReportData() {
+  try {
+    // Get stats from background script
+    const response = await chrome.runtime.sendMessage({
+      action: 'GET_STATS'
+    });
+    
+    if (response.success && response.data) {
+      const stats = response.data.stats || {};
+      const blockedRequests = response.data.blockedRequests || [];
+      
+      // Calculate privacy score
+      if (window.privacyScoreEngine) {
+        reportData = await window.privacyScoreEngine.getComprehensiveReport();
+      } else {
+        reportData = getDefaultReportData();
+      }
+      
+      updatePrivacyScoreDisplay(reportData.current);
+      updateStatisticsDisplay(stats);
+      updateTopBlockedDomains(blockedRequests);
+      updateTimeBasedStats(blockedRequests);
+      
+      console.log('✅ Privacy report loaded:', reportData);
+    }
+  } catch (error) {
+    console.error('❌ Error loading report data:', error);
+    reportData = getDefaultReportData();
+    updatePrivacyScoreDisplay(reportData.current);
+  }
+}
+
+// Get Default Report Data
+function getDefaultReportData() {
+  return {
+    current: {
+      score: 50,
+      grade: 'C',
+      level: 'Fair',
+      color: '#ffc107',
+      factors: {},
+      recommendations: []
+    },
+    historical: [],
+    trend: 'stable'
+  };
+}
+
+// Update Privacy Score Display
+function updatePrivacyScoreDisplay(scoreData) {
+  if (!scoreData) {
+    return;
+  }
+  
+  if (reportScoreElement) {
+    reportScoreElement.textContent = `${scoreData.score || 0}%`;
+    if (scoreData.color) {
+      reportScoreElement.style.color = scoreData.color;
+    }
+  }
+  
+  if (scoreDescriptionElement) {
+    const level = scoreData.level || 'Unknown';
+    scoreDescriptionElement.textContent = `Your privacy protection is ${level}`;
+  }
+}
+
+// Update Statistics Display
+function updateStatisticsDisplay(stats) {
+  const totalTrackers = stats.trackerCount || 0;
+  const totalAds = stats.adCount || 0;
+  const totalBlocked = stats.blockedCount || 0;
+  const crossSiteAttempts = Math.floor(totalBlocked * 0.1);
+  const dataSavedMB = Math.floor((totalTrackers * 0.5) + (totalAds * 0.3));
+  
+  if (totalTrackersElement) {
+    animateNumber(totalTrackersElement, totalTrackers);
+  }
+  
+  if (totalAdsElement) {
+    animateNumber(totalAdsElement, totalAds);
+  }
+  
+  if (crossSiteElement) {
+    animateNumber(crossSiteElement, crossSiteAttempts);
+  }
+  
+  if (dataSavedElement) {
+    animateNumber(dataSavedElement, dataSavedMB);
+  }
+}
+
+// Update Time-Based Stats
+function updateTimeBasedStats(blockedRequests) {
+  const now = Date.now();
+  const oneDayAgo = now - (24 * 60 * 60 * 1000);
+  const sevenDaysAgo = now - (7 * 24 * 60 * 60 * 1000);
+  const thirtyDaysAgo = now - (30 * 24 * 60 * 60 * 1000);
+  
+  let dayTrackers = 0, dayAds = 0;
+  let weekTrackers = 0, weekAds = 0;
+  let monthTrackers = 0, monthAds = 0;
+  
+  blockedRequests.forEach(req => {
+    const timestamp = req.blockedAt || Date.now();
+    const category = req.category || 'unknown';
+    
+    if (timestamp > oneDayAgo) {
+      if (category === 'trackers') dayTrackers++;
+      if (category === 'ads') dayAds++;
+    }
+    
+    if (timestamp > sevenDaysAgo) {
+      if (category === 'trackers') weekTrackers++;
+      if (category === 'ads') weekAds++;
+    }
+    
+    if (timestamp > thirtyDaysAgo) {
+      if (category === 'trackers') monthTrackers++;
+      if (category === 'ads') monthAds++;
+    }
+  });
+  
+  if (dayTrackersElement) {
+    animateNumber(dayTrackersElement, dayTrackers);
+  }
+  
+  if (dayAdsElement) {
+    animateNumber(dayAdsElement, dayAds);
+  }
+  
+  if (weekTrackersElement) {
+    animateNumber(weekTrackersElement, weekTrackers);
+  }
+  
+  if (weekAdsElement) {
+    animateNumber(weekAdsElement, weekAds);
+  }
+  
+  if (monthTrackersElement) {
+    animateNumber(monthTrackersElement, monthTrackers);
+  }
+  
+  if (monthAdsElement) {
+    animateNumber(monthAdsElement, monthAds);
+  }
+}
+
+// Update Top Blocked Domains
+function updateTopBlockedDomains(blockedRequests) {
+  if (!topDomainsElement) {
+    return;
+  }
+  
+  if (!blockedRequests || blockedRequests.length === 0) {
+    topDomainsElement.innerHTML = '<p>No blocked domains yet</p>';
+    return;
+  }
+  
+  // Count domain occurrences
+  const domainCounts = {};
+  blockedRequests.forEach(req => {
+    const domain = req.domain || 'unknown';
+    domainCounts[domain] = (domainCounts[domain] || 0) + 1;
+  });
+  
+  // Sort by count (most blocked first)
+  const sortedDomains = Object.entries(domainCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 10);
+  
+  let html = '';
+  sortedDomains.forEach(([domain, count], index) => {
+    html += `
+      <div class="top-domain-item">
+        <span class="top-domain-rank">#${index + 1}</span>
+        <span class="top-domain-name">${domain}</span>
+        <span class="top-domain-count">${count} blocked</span>
+      </div>
+    `;
+  });
+  
+  topDomainsElement.innerHTML = html;
+}
+
+// Refresh Report
+async function refreshReport() {
+  if (refreshInsightsBtn) {
+    refreshInsightsBtn.textContent = 'Refreshing...';
+    refreshInsightsBtn.disabled = true;
+  }
+  
+  await loadReportData();
+  
+  if (refreshInsightsBtn) {
+    refreshInsightsBtn.textContent = 'Refresh AI Insights';
+    refreshInsightsBtn.disabled = false;
+  }
+}
+
+// Export Report as CSV
+function exportReportAsCsv() {
+  if (!reportData || !reportData.current) {
+    alert('No report data to export');
+    return;
+  }
+  
+  const stats = reportData.current || {};
+  const csvContent = [
+    ['Metric', 'Value', 'Description'],
+    ['Privacy Score', stats.score || 0, `Overall privacy protection score`],
+    ['Grade', stats.grade || 'N/A', 'Privacy protection grade'],
+    ['Level', stats.level || 'Unknown', 'Protection level']
+  ].map(row => row.join(',')).join('\n');
+  
+  const blob = new Blob([csvContent], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `prAIvacy-report-${Date.now()}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  
+  console.log('✅ Privacy report exported as CSV');
+}
+
+// Export Report as PDF (simplified - shows alert)
+function exportReportAsPdf() {
+  alert('PDF export feature coming soon! Use CSV export for now.');
+}
+
+// Share Report
+function shareReport() {
+  if (!reportData) {
+    alert('No report data to share');
+    return;
+  }
+  
+  const shareText = `My prAIvacy Privacy Score: ${reportData.current.score}% (${reportData.current.grade})\nTrackers Blocked: ${document.getElementById('total-trackers')?.textContent || 0}\nAds Blocked: ${document.getElementById('total-ads')?.textContent || 0}`;
+  
+  if (navigator.share) {
+    navigator.share({
+      title: 'prAIvacy Privacy Report',
+      text: shareText
+    }).catch(err => {
+      console.error('Error sharing:', err);
+      fallbackShare(shareText);
+    });
+  } else {
+    fallbackShare(shareText);
+  }
+}
+
+// Fallback Share (copy to clipboard)
+function fallbackShare(text) {
+  navigator.clipboard.writeText(text).then(() => {
+    alert('Report copied to clipboard!');
+  }).catch(() => {
+    alert('Failed to copy report');
+  });
+}
+
+// Animate Number
+function animateNumber(element, target) {
+  const current = parseInt(element.textContent?.replace(/,/g, '')) || 0;
+  if (current === target) {
+    return;
+  }
+  
+  const duration = 500;
+  const steps = 20;
+  const increment = (target - current) / steps;
+  let step = 0;
+  
+  const interval = setInterval(() => {
+    step++;
+    const value = Math.round(current + (increment * step));
+    element.textContent = value.toLocaleString();
+    
+    if (step >= steps) {
+      clearInterval(interval);
+      element.textContent = target.toLocaleString();
+    }
+  }, duration / steps);
+}
+
+// Start Auto Refresh
+function startAutoRefresh() {
+  if (updateInterval) {
+    clearInterval(updateInterval);
+  }
+  
+  // Update every 30 seconds
+  updateInterval = setInterval(() => {
+    loadReportData();
+  }, 30000);
+}
+
+// Stop Auto Refresh
+function stopAutoRefresh() {
+  if (updateInterval) {
+    clearInterval(updateInterval);
+    updateInterval = null;
+  }
+}
+
+// Initialize on DOM ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initReportPage);
+} else {
+  initReportPage();
+}
+
+// Cleanup on page unload
+window.addEventListener('beforeunload', stopAutoRefresh);
+
+console.log('✅ Privacy Report script loaded');

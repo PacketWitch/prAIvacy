@@ -249,8 +249,9 @@ function updateBlockedDomainsList() {
   
   blockedDomainsList.innerHTML = html;
   
-  // Add event listeners for unblock buttons
-  document.querySelectorAll('.btn-unblock').forEach(btn => {
+  // Clean up old event listeners by creating fresh buttons
+  const unblockButtons = blockedDomainsList.querySelectorAll('.btn-unblock');
+  unblockButtons.forEach(btn => {
     btn.addEventListener('click', (e) => {
       const domain = e.target.dataset.domain;
       const type = e.target.dataset.type;

@@ -100,3 +100,18 @@
   50% { width: 70%; }
   100% { width: 100%; }
 }
+
+/* Clickable Stats */
+.stat.clickable-stat {
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-decoration-color: rgba(0, 255, 156, 0.5);
+  transition: all 0.2s ease;
+}
+
+.stat.clickable-stat:hover {
+  color: #00f0ff;
+  text-decoration-style: solid;
+  transform: scale(1.05);
+}
