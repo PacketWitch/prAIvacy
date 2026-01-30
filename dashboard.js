@@ -67,6 +67,27 @@ function setupEventListeners() {
   if (debugBtn) {
     debugBtn.addEventListener('click', showDebugInfo);
   }
+  
+  // Domains stat click - show modal
+  if (domainsStat) {
+    domainsStat.addEventListener('click', showDomainsModal);
+  }
+  
+  // Close modal button
+  const closeModalBtn = document.getElementById('close-domains-modal');
+  if (closeModalBtn) {
+    closeModalBtn.addEventListener('click', hideDomainsModal);
+  }
+  
+  // Close modal on background click
+  const modal = document.getElementById('domains-modal');
+  if (modal) {
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        hideDomainsModal();
+      }
+    });
+  }
 }
 
 // Load Protection State
@@ -133,6 +154,82 @@ async function toggleBlocking(enabled) {
       protectionToggle.checked = !enabled;
     }
   }
+}
+
+// Show Domains Modal
+async function showDomainsModal() {
+  const modal = document.getElementById('domains-modal');
+  const tableBody = document.getElementById('domains-table-body');
+  
+  if (!modal || !tableBody) {
+    return;
+  }
+  
+  // Show modal
+  modal.classList.add('show');
+  
+  // Clear table and show loading
+  tableBody.innerHTML = '<tr><td colspan="4">Loading domains...</td></tr>';
+  
+  try {
+    // Get all blocked domains from background script
+    const response = await chrome.runtime.sendMessage({
+      action: 'GET_STATS'
+    });
+    
+    if (response.success && response.data && response.data.blockedRequests) {
+      populateDomainsTable(response.data.blockedRequests);
+    } else {
+      tableBody.innerHTML = '<tr><td colspan="4">No blocked domains found</td></tr>';
+    }
+  } catch (error) {
+    console.error('❌ Error loading domains:', error);
+    tableBody.innerHTML = '<tr><td colspan="4">Error loading domains</td></tr>';
+  }
+}
+
+// Hide Domains Modal
+function hideDomainsModal() {
+  const modal = document.getElementById('domains-modal');
+  if (modal) {
+    modal.classList.remove('show');
+  }
+}
+
+// Populate Domains Table
+function populateDomainsTable(domains) {
+  const tableBody = document.getElementById('domains-table-body');
+  
+  if (!tableBody) {
+    return;
+  }
+  
+  if (!domains || domains.length === 0) {
+    tableBody.innerHTML = '<tr><td colspan="4">No blocked domains found</td></tr>';
+    return;
+  }
+  
+  // Sort by blockedAt descending (most recent first)
+  const sortedDomains = [...domains].sort((a, b) => (b.blockedAt || 0) - (a.blockedAt || 0));
+  
+  let html = '';
+  sortedDomains.forEach(domain => {
+    const category = domain.category || 'unknown';
+    const categoryClass = category === 'ads' ? 'category-ads' : category === 'trackers' ? 'category-trackers' : 'category-unknown';
+    const timeAgo = getTimeAgo(domain.blockedAt);
+    const sourceWebsite = domain.sourceWebsite || domain.source || 'Unknown';
+    
+    html += `
+      <tr>
+        <td class="domain-cell" title="${domain.domain}">${domain.domain}</td>
+        <td><span class="category-badge ${categoryClass}">${category}</span></td>
+        <td class="time-cell">${timeAgo}</td>
+        <td class="source-cell" title="${sourceWebsite}">${sourceWebsite}</td>
+      </tr>
+    `;
+  });
+  
+  tableBody.innerHTML = html;
 }
 
 // Load Dashboard Data

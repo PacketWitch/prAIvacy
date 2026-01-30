@@ -77,6 +77,35 @@
         </ul>
       </section>
     </main>
+
+    <!-- DOMAINS MODAL -->
+    <div class="modal" id="domains-modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>All Blocked Domains</h2>
+          <button class="close-modal" id="close-domains-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="domains-table-container">
+            <table class="domains-table">
+              <thead>
+                <tr>
+                  <th>Domain</th>
+                  <th>Category</th>
+                  <th>Blocked At</th>
+                  <th>Source</th>
+                </tr>
+              </thead>
+              <tbody id="domains-table-body">
+                <tr>
+                  <td colspan="4">Loading domains...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script src="dashboard.js"></script>
