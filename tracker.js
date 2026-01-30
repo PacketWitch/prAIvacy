@@ -9,7 +9,6 @@ const totalAdsStat = document.getElementById('total-ads');
 const updateStatusStat = document.getElementById('update-status');
 const goLiveBtn = document.getElementById('go-live-btn');
 const liveStatusText = document.getElementById('live-status');
-const recentBlocked = document.getElementById('recent-blocked');
 const visitedDomainsList = document.getElementById('visited-domains-list');
 
 // State
@@ -107,7 +106,6 @@ async function loadTrackerStats() {
     
     if (response.success && response.data) {
       updateStatsDisplay(response.data.stats);
-      updateRecentBlocked(response.data.blockedRequests || []);
       updateVisitedDomains();
       console.log('✅ Tracker stats loaded:', response.data.stats);
     }
@@ -142,51 +140,6 @@ function updateStatsDisplay(stats) {
     totalAdsStat.textContent = adCount;
     animateNumber(totalAdsStat, adCount);
   }
-}
-
-// Update Recent Blocked
-function updateRecentBlocked(blockedRequests) {
-  if (!recentBlocked) {
-    return;
-  }
-  
-  if (!blockedRequests || blockedRequests.length === 0) {
-    recentBlocked.innerHTML = `
-      <div class="loading-state">
-        <p>No blocked requests yet. Start browsing!</p>
-      </div>
-    `;
-    return;
-  }
-  
-  // Sort by blockedAt descending (most recent first)
-  const sortedRequests = [...blockedRequests].sort((a, b) => (b.blockedAt || 0) - (a.blockedAt || 0));
-  
-  let html = '';
-  sortedRequests.slice(0, 20).forEach(request => {
-    const category = request.category || 'unknown';
-    const icon = category === 'ads' ? '🛑' : category === 'trackers' ? '🕵️' : '⚠️';
-    const timeAgo = getTimeAgo(request.blockedAt);
-    const sourceWebsite = request.sourceWebsite || 'Unknown';
-    
-    html += `
-      <div class="blocked-request-item">
-        <div class="request-header">
-          <span class="request-icon">${icon}</span>
-          <div class="request-info">
-            <strong class="request-domain">${request.domain}</strong>
-            <span class="request-time">${timeAgo}</span>
-          </div>
-        </div>
-        <div class="request-details">
-          <span class="request-source">From: ${sourceWebsite}</span>
-          <span class="request-category">${category.toUpperCase()}</span>
-        </div>
-      </div>
-    `;
-  });
-  
-  recentBlocked.innerHTML = html;
 }
 
 // Update Visited Domains
