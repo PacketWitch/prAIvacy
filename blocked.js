@@ -229,9 +229,6 @@ function updateBlockedDomainsList() {
     
     html += `
       <div class="blocked-domain-item" id="${uniqueId}">
-        <div class="domain-checkbox">
-          <input type="checkbox" class="domain-select" data-domain="${domain.domain}" data-type="${category}">
-        </div>
         <div class="domain-content">
           <div class="domain-header">
             <span class="domain-icon">${icon}</span>
