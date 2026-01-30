@@ -2256,6 +2256,16 @@ input:checked + .slider:before {
   padding: 15px;
   margin-bottom: 12px;
   transition: all 0.2s ease;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.domain-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .blocked-domain-item:hover {
@@ -2319,7 +2329,7 @@ input:checked + .slider:before {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-left: 36px;
+  padding-left: 0;
   font-size: 12px;
   color: #9caab8;
 }
@@ -2418,6 +2428,84 @@ input:checked + .slider:before {
   margin: 0;
   font-size: 16px;
 }
+
+/* Add Domain Control Styles */
+.add-domain-control {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+}
+
+.add-domain-control input {
+  flex: 1;
+  padding: 12px 15px;
+  border: 2px solid #1e2a38;
+  border-radius: 12px;
+  background: #0b0f14;
+  color: #ffffff;
+  font-size: 14px;
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+.add-domain-control input:focus {
+  border-color: #00f0ff;
+  box-shadow: 0 0 20px rgba(0, 240, 255, 0.1);
+}
+
+.add-domain-control .btn-primary {
+  padding: 12px 25px;
+  font-size: 14px;
+  font-weight: bold;
+  border-radius: 12px;
+}
+
+/* Domain Checkbox Styles */
+.domain-checkbox {
+  padding-right: 15px;
+  display: flex;
+  align-items: center;
+}
+
+.domain-checkbox input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  accent-color: #00f0ff;
+  border: 2px solid #1e2a38;
+  border-radius: 4px;
+  padding: 0;
+}
+
+.domain-checkbox input[type="checkbox"]:checked {
+  background: #00f0ff;
+}
+
+/* Unblock Button Styles */
+.btn-unblock {
+  background: rgba(255, 107, 107, 0.2);
+  color: #ff6b6b;
+  border: 1px solid #ff6b6b;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-transform: uppercase;
+}
+
+.btn-unblock:hover {
+  background: rgba(255, 107, 107, 0.4);
+  transform: translateY(-2px);
+}
+
+/* User Category Badge */
+.domain-category-badge.category-user {
+  background: rgba(0, 255, 156, 0.2);
+  color: #00ff9c;
+}
+
 
 
 

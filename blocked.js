@@ -14,9 +14,12 @@ const blockedCategoryStats = document.getElementById('blocked-category-stats');
 const blockedDomainSearch = document.getElementById('blocked-domain-search');
 const blockedCategoryFilter = document.getElementById('blocked-category-filter');
 const exportBlockedListBtn = document.getElementById('export-blocked-list');
+const addDomainInput = document.getElementById('add-domain-input');
+const addDomainBtn = document.getElementById('add-domain-btn');
 
 // State
 let allBlockedDomains = [];
+let userBlockedDomains = [];
 let filteredDomains = [];
 let updateInterval = null;
 
@@ -56,6 +59,20 @@ function setupEventListeners() {
   if (exportBlockedListBtn) {
     exportBlockedListBtn.addEventListener('click', exportBlockedList);
   }
+  
+  // Add domain button
+  if (addDomainBtn) {
+    addDomainBtn.addEventListener('click', addDomainToBlock);
+  }
+  
+  // Add domain on Enter key
+  if (addDomainInput) {
+    addDomainInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        addDomainToBlock();
+      }
+    });
+  }
 }
 
 // Load Blocked Domains
@@ -64,6 +81,10 @@ async function loadBlockedDomains() {
     const response = await chrome.runtime.sendMessage({
       action: 'GET_STATS'
     });
+    
+    // Load user blocked domains from storage
+    const userData = await chrome.storage.local.get(['userBlockedDomains']);
+    userBlockedDomains = userData.userBlockedDomains || [];
     
     if (response.success && response.data && response.data.blockedRequests) {
       allBlockedDomains = response.data.blockedRequests;
@@ -75,6 +96,7 @@ async function loadBlockedDomains() {
       updateRiskBreakdown();
       
       console.log('✅ Blocked domains loaded:', allBlockedDomains.length);
+      console.log('✅ User blocked domains:', userBlockedDomains.length);
     } else {
       console.warn('⚠️ No blocked domains data');
     }
@@ -85,9 +107,9 @@ async function loadBlockedDomains() {
 
 // Update Stats Display
 function updateStatsDisplay() {
-  const totalBlocked = allBlockedDomains.length;
+  const totalBlocked = allBlockedDomains.length + userBlockedDomains.length;
   const systemBlocked = allBlockedDomains.filter(d => d.source === 'declarativeNetRequest').length;
-  const userBlocked = allBlockedDomains.filter(d => d.source === 'user').length;
+  const userBlocked = userBlockedDomains.length;
   
   if (totalBlockedCount) {
     animateNumber(totalBlockedCount, totalBlocked);
@@ -177,7 +199,19 @@ function updateBlockedDomainsList() {
     return;
   }
   
-  if (!filteredDomains || filteredDomains.length === 0) {
+  // Combine system blocked and user blocked domains
+  const allDomains = [
+    ...filteredDomains,
+    ...userBlockedDomains.map(domain => ({
+      domain: domain,
+      category: 'user',
+      source: 'user',
+      blockedAt: Date.now(),
+      sourceWebsite: 'User Added'
+    }))
+  ];
+  
+  if (!allDomains || allDomains.length === 0) {
     blockedDomainsList.innerHTML = `
       <div class="no-data-message">
         <p>No blocked domains found</p>
@@ -187,35 +221,50 @@ function updateBlockedDomainsList() {
   }
   
   // Sort by blockedAt descending (most recent first)
-  const sortedDomains = [...filteredDomains].sort((a, b) => (b.blockedAt || 0) - (a.blockedAt || 0));
+  const sortedDomains = allDomains.sort((a, b) => (b.blockedAt || 0) - (a.blockedAt || 0));
   
   let html = '';
-  sortedDomains.forEach(domain => {
+  sortedDomains.forEach((domain, index) => {
     const category = domain.category || 'unknown';
-    const categoryClass = category === 'ads' ? 'category-ads' : category === 'trackers' ? 'category-trackers' : 'category-unknown';
-    const icon = category === 'ads' ? '🛑' : category === 'trackers' ? '🕵️' : '⚠️';
+    const categoryClass = category === 'ads' ? 'category-ads' : category === 'trackers' ? 'category-trackers' : category === 'user' ? 'category-user' : 'category-unknown';
+    const icon = category === 'ads' ? '🛑' : category === 'trackers' ? '🕵️' : category === 'user' ? '👤' : '⚠️';
     const timeAgo = getTimeAgo(domain.blockedAt);
     const sourceWebsite = domain.sourceWebsite || 'Unknown';
+    const isUserBlocked = category === 'user';
+    const uniqueId = `domain-${index}`;
     
     html += `
-      <div class="blocked-domain-item">
-        <div class="domain-header">
-          <span class="domain-icon">${icon}</span>
-          <div class="domain-info">
-            <strong class="domain-name">${domain.domain}</strong>
-            <span class="domain-time">${timeAgo}</span>
-          </div>
-          <span class="domain-category-badge ${categoryClass}">${category.toUpperCase()}</span>
+      <div class="blocked-domain-item" id="${uniqueId}">
+        <div class="domain-checkbox">
+          <input type="checkbox" class="domain-select" data-domain="${domain.domain}" data-type="${category}">
         </div>
-        <div class="domain-details">
-          <span class="domain-source">From: ${sourceWebsite}</span>
-          <span class="domain-count">Blocked 1 time</span>
+        <div class="domain-content">
+          <div class="domain-header">
+            <span class="domain-icon">${icon}</span>
+            <div class="domain-info">
+              <strong class="domain-name">${domain.domain}</strong>
+              <span class="domain-time">${timeAgo}</span>
+            </div>
+            <span class="domain-category-badge ${categoryClass}">${category.toUpperCase()}</span>
+          </div>
+          <div class="domain-details">
+            <span class="domain-source">From: ${sourceWebsite}</span>
+            ${isUserBlocked ? `<button class="btn-unblock" data-domain="${domain.domain}">🔓 Unblock</button>` : '<span class="domain-count">System Blocked</span>'}
+          </div>
         </div>
       </div>
     `;
   });
   
   blockedDomainsList.innerHTML = html;
+  
+  // Add event listeners for unblock buttons
+  document.querySelectorAll('.btn-unblock').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const domain = e.target.dataset.domain;
+      unblockDomain(domain);
+    });
+  });
 }
 
 // Filter Domains
@@ -245,6 +294,78 @@ function filterDomains() {
   });
   
   updateBlockedDomainsList();
+}
+
+// Add Domain to Block
+async function addDomainToBlock() {
+  const domain = addDomainInput?.value?.trim();
+  
+  if (!domain) {
+    alert('Please enter a domain to block');
+    return;
+  }
+  
+  // Validate domain format
+  if (!domain.includes('.')) {
+    alert('Please enter a valid domain (e.g., example.com)');
+    return;
+  }
+  
+  // Check if already blocked
+  if (userBlockedDomains.includes(domain)) {
+    alert('This domain is already in your blocklist');
+    return;
+  }
+  
+  try {
+    // Add to user blocked domains
+    userBlockedDomains.push(domain);
+    
+    await chrome.storage.local.set({
+      userBlockedDomains: userBlockedDomains
+    });
+    
+    // Clear input
+    if (addDomainInput) {
+      addDomainInput.value = '';
+    }
+    
+    // Refresh list
+    updateStatsDisplay();
+    updateBlockedDomainsList();
+    
+    console.log('✅ Domain added to blocklist:', domain);
+    alert(`Domain "${domain}" has been added to blocklist`);
+  } catch (error) {
+    console.error('❌ Error adding domain to block:', error);
+    alert('Failed to add domain to blocklist');
+  }
+}
+
+// Unblock Domain
+async function unblockDomain(domain) {
+  if (!confirm(`Are you sure you want to unblock "${domain}"?`)) {
+    return;
+  }
+  
+  try {
+    // Remove from user blocked domains
+    userBlockedDomains = userBlockedDomains.filter(d => d !== domain);
+    
+    await chrome.storage.local.set({
+      userBlockedDomains: userBlockedDomains
+    });
+    
+    // Refresh list
+    updateStatsDisplay();
+    updateBlockedDomainsList();
+    
+    console.log('✅ Domain unblocked:', domain);
+    alert(`Domain "${domain}" has been unblocked`);
+  } catch (error) {
+    console.error('❌ Error unblocking domain:', error);
+    alert('Failed to unblock domain');
+  }
 }
 
 // Export Blocked List
