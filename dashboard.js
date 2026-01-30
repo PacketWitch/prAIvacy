@@ -9,7 +9,6 @@ const privacyScoreStat = document.getElementById('privacy-score');
 const activityList = document.getElementById('activity-list');
 const protectionToggle = document.getElementById('protection-toggle');
 const powerStatus = document.getElementById('power-status');
-const debugBtn = document.getElementById('debug-btn');
 
 // State
 let updateInterval = null;
@@ -61,11 +60,6 @@ function setupEventListeners() {
       const enabled = e.target.checked;
       await toggleBlocking(enabled);
     });
-  }
-  
-  // Debug button
-  if (debugBtn) {
-    debugBtn.addEventListener('click', showDebugInfo);
   }
   
   // Domains stat click - show modal
@@ -462,23 +456,6 @@ function showErrorState(message) {
   if (activityList) {
     activityList.innerHTML = `<li class="error">⚠️ ${message}</li>`;
   }
-}
-
-// Show Debug Info
-function showDebugInfo() {
-  console.log('=== prAIvacy Debug Info ===');
-  console.log('Dashboard Elements:', {
-    trackersStat: !!trackersStat,
-    adsStat: !!adsStat,
-    domainsStat: !!domainsStat,
-    privacyScoreStat: !!privacyScoreStat,
-    activityList: !!activityList,
-    protectionToggle: !!protectionToggle
-  });
-  
-  chrome.runtime.sendMessage({ action: 'GET_STATS' }, (response) => {
-    console.log('Background Response:', response);
-  });
 }
 
 // Start Auto Refresh
