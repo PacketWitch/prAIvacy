@@ -2500,6 +2500,26 @@ input:checked + .slider:before {
   transform: translateY(-2px);
 }
 
+.btn-unblock.system-unblock {
+  background: rgba(0, 240, 255, 0.2);
+  color: #00f0ff;
+  border: 1px solid #00f0ff;
+}
+
+.btn-unblock.system-unblock:hover {
+  background: rgba(0, 240, 255, 0.4);
+}
+
+.btn-unblock.user-unblock {
+  background: rgba(255, 107, 107, 0.2);
+  color: #ff6b6b;
+  border: 1px solid #ff6b6b;
+}
+
+.btn-unblock.user-unblock:hover {
+  background: rgba(255, 107, 107, 0.4);
+}
+
 /* User Category Badge */
 .domain-category-badge.category-user {
   background: rgba(0, 255, 156, 0.2);

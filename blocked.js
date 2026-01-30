@@ -11,7 +11,6 @@ const highRiskCount = document.getElementById('high-risk-count');
 const mediumRiskCount = document.getElementById('medium-risk-count');
 const lowRiskCount = document.getElementById('low-risk-count');
 const blockedCategoryStats = document.getElementById('blocked-category-stats');
-const blockedDomainSearch = document.getElementById('blocked-domain-search');
 const blockedCategoryFilter = document.getElementById('blocked-category-filter');
 const exportBlockedListBtn = document.getElementById('export-blocked-list');
 const addDomainInput = document.getElementById('add-domain-input');
@@ -45,11 +44,6 @@ async function initBlockedPage() {
 
 // Setup Event Listeners
 function setupEventListeners() {
-  // Search input
-  if (blockedDomainSearch) {
-    blockedDomainSearch.addEventListener('input', filterDomains);
-  }
-  
   // Category filter
   if (blockedCategoryFilter) {
     blockedCategoryFilter.addEventListener('change', filterDomains);
@@ -60,16 +54,16 @@ function setupEventListeners() {
     exportBlockedListBtn.addEventListener('click', exportBlockedList);
   }
   
-  // Add domain button
+  // Add/unblock domain button
   if (addDomainBtn) {
-    addDomainBtn.addEventListener('click', addDomainToBlock);
+    addDomainBtn.addEventListener('click', addOrUnblockDomain);
   }
   
-  // Add domain on Enter key
+  // Add/unblock domain on Enter key
   if (addDomainInput) {
     addDomainInput.addEventListener('keypress', (e) => {
       if (e.key === 'Enter') {
-        addDomainToBlock();
+        addOrUnblockDomain();
       }
     });
   }
@@ -249,7 +243,7 @@ function updateBlockedDomainsList() {
           </div>
           <div class="domain-details">
             <span class="domain-source">From: ${sourceWebsite}</span>
-            ${isUserBlocked ? `<button class="btn-unblock" data-domain="${domain.domain}">🔓 Unblock</button>` : '<span class="domain-count">System Blocked</span>'}
+            <button class="btn-unblock ${isUserBlocked ? 'user-unblock' : 'system-unblock'}" data-domain="${domain.domain}" data-type="${category}">🔓 ${isUserBlocked ? 'Unblock' : 'Allow'}</button>
           </div>
         </div>
       </div>
@@ -262,22 +256,17 @@ function updateBlockedDomainsList() {
   document.querySelectorAll('.btn-unblock').forEach(btn => {
     btn.addEventListener('click', (e) => {
       const domain = e.target.dataset.domain;
-      unblockDomain(domain);
+      const type = e.target.dataset.type;
+      unblockDomain(domain, type);
     });
   });
 }
 
 // Filter Domains
 function filterDomains() {
-  const searchTerm = blockedDomainSearch?.value?.toLowerCase() || '';
   const categoryFilter = blockedCategoryFilter?.value || '';
   
   filteredDomains = allBlockedDomains.filter(domain => {
-    // Search filter
-    const matchesSearch = !searchTerm || 
-      domain.domain?.toLowerCase().includes(searchTerm) ||
-      domain.sourceWebsite?.toLowerCase().includes(searchTerm);
-    
     // Category filter
     let matchesCategory = true;
     if (categoryFilter) {
@@ -290,7 +279,7 @@ function filterDomains() {
       }
     }
     
-    return matchesSearch && matchesCategory;
+    return matchesCategory;
   });
   
   updateBlockedDomainsList();
@@ -301,7 +290,7 @@ async function addDomainToBlock() {
   const domain = addDomainInput?.value?.trim();
   
   if (!domain) {
-    alert('Please enter a domain to block');
+    alert('Please enter a domain to block/unblock');
     return;
   }
   
@@ -311,14 +300,27 @@ async function addDomainToBlock() {
     return;
   }
   
-  // Check if already blocked
+  // Check if already blocked in user list
   if (userBlockedDomains.includes(domain)) {
-    alert('This domain is already in your blocklist');
+    if (!confirm(`"${domain}" is already in your blocklist. Remove it?`)) {
+      return;
+    }
+    await unblockDomain(domain, 'user');
     return;
   }
   
+  // Check if in system blocked domains
+  const systemBlocked = allBlockedDomains.find(d => d.domain === domain);
+  if (systemBlocked) {
+    if (!confirm(`"${domain}" is blocked by the system. Allow it (add to allowlist)?`)) {
+      return;
+    }
+    await unblockDomain(domain, 'system');
+    return;
+  }
+  
+  // Not blocked, add to user blocklist
   try {
-    // Add to user blocked domains
     userBlockedDomains.push(domain);
     
     await chrome.storage.local.set({
@@ -343,25 +345,43 @@ async function addDomainToBlock() {
 }
 
 // Unblock Domain
-async function unblockDomain(domain) {
-  if (!confirm(`Are you sure you want to unblock "${domain}"?`)) {
+async function unblockDomain(domain, type = 'user') {
+  const action = type === 'user' ? 'remove from your blocklist' : 'add to allowlist';
+  if (!confirm(`Are you sure you want to allow "${domain}"? (${action})`)) {
     return;
   }
   
   try {
-    // Remove from user blocked domains
-    userBlockedDomains = userBlockedDomains.filter(d => d !== domain);
+    if (type === 'user') {
+      // Remove from user blocked domains
+      userBlockedDomains = userBlockedDomains.filter(d => d !== domain);
+      
+      await chrome.storage.local.set({
+        userBlockedDomains: userBlockedDomains
+      });
+    } else {
+      // System blocked - add to allowlist
+      let allowlist = [];
+      const data = await chrome.storage.local.get(['allowlist']);
+      allowlist = data.allowlist || [];
+      
+      if (!allowlist.includes(domain)) {
+        allowlist.push(domain);
+        await chrome.storage.local.set({ allowlist });
+      }
+    }
     
-    await chrome.storage.local.set({
-      userBlockedDomains: userBlockedDomains
-    });
+    // Clear input if this was triggered from the input
+    if (addDomainInput && addDomainInput.value.toLowerCase().trim() === domain.toLowerCase()) {
+      addDomainInput.value = '';
+    }
     
     // Refresh list
     updateStatsDisplay();
     updateBlockedDomainsList();
     
-    console.log('✅ Domain unblocked:', domain);
-    alert(`Domain "${domain}" has been unblocked`);
+    console.log('✅ Domain unblocked:', domain, type);
+    alert(`Domain "${domain}" has been allowed`);
   } catch (error) {
     console.error('❌ Error unblocking domain:', error);
     alert('Failed to unblock domain');
