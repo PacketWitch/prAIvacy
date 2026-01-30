@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>prAIvacy – Settings</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <link rel="stylesheet" href="style.css" />
+  <script src="db/indexedDb.js"></script>
+  <script src="privacy-score.js"></script>
+  <script src="notification-manager.js"></script>
+  <script src="settings.js" defer></script>
+</head>
+<body>
+
+  <div class="app">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <h2 class="logo">pr<span>AI</span>vacy</h2>
+
+<nav>
+        <a href="dashboard.html" class="nav-link">Dashboard</a>
+        <a href="tracker.html" class="nav-link">Tracker Detection</a>
+        <a href="blocked.html" class="nav-link">Blocked Domains</a>
+        <a href="report.html" class="nav-link">Privacy Report</a>
+        <a href="settings.html" class="nav-link active">Settings</a>
+      </nav>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main">
+      <header class="header">
+        <h1>Settings</h1>
+        <p>Configure your privacy protection level</p>
+      </header>
+
+      <!-- BLOCKING LEVEL -->
+      <section class="panel">
+        <h2>Blocking Level</h2>
+        <div class="blocking-levels">
+          <div class="level-option">
+            <input type="radio" id="light" name="blocking-level" value="light">
+            <label for="light">
+              <h3>🌙 Light</h3>
+              <p>Block only known advertisements and major trackers</p>
+              <div class="level-details">
+                <span>✅ Ads blocked</span>
+                <span>✅ Major trackers</span>
+                <span>❌ Analytics allowed</span>
+              </div>
+            </label>
+          </div>
+
+          <div class="level-option">
+            <input type="radio" id="moderate" name="blocking-level" value="moderate" checked>
+            <label for="moderate">
+              <h3>⚖️ Moderate</h3>
+              <p>Block ads, trackers, and analytics scripts</p>
+              <div class="level-details">
+                <span>✅ Ads blocked</span>
+                <span>✅ All trackers</span>
+                <span>✅ Analytics blocked</span>
+              </div>
+            </label>
+          </div>
+
+          <div class="level-option">
+            <input type="radio" id="strict" name="blocking-level" value="strict">
+            <label for="strict">
+              <h3>🛡️ Strict</h3>
+              <p>Block all third-party requests and potential threats</p>
+              <div class="level-details">
+                <span>✅ All third-party blocked</span>
+                <span>✅ Maximum privacy</span>
+                <span>⚠️ May break some sites</span>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <button id="apply-settings" class="btn btn-primary">Apply Settings</button>
+      </section>
+
+      <!-- PRIVACY CONTROLS -->
+      <section class="panel">
+        <h2>Privacy Controls</h2>
+
+        <div class="setting">
+          <div class="setting-info">
+            <span>Block Ads</span>
+            <p class="setting-description">Block advertisement networks and tracking pixels</p>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="block-ads" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="setting">
+          <div class="setting-info">
+            <span>Block Trackers</span>
+            <p class="setting-description">Prevent cross-site tracking and behavioral analytics</p>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="block-trackers" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="setting">
+          <div class="setting-info">
+            <span>Prevent Cross-Site Tracking</span>
+            <p class="setting-description">Stop websites from tracking you across different sites</p>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="prevent-cross-site" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+      </section>
+
+      <!-- ADVANCED SETTINGS -->
+      <section class="panel">
+        <h2>Advanced Settings</h2>
+
+        <div class="setting">
+          <div class="setting-info">
+            <span>Enable Fingerprint Protection</span>
+            <p class="setting-description">Block browser fingerprinting attempts</p>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="fingerprint-protection" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="setting">
+          <div class="setting-info">
+            <span>Show Notifications</span>
+            <p class="setting-description">Display alerts when trackers are blocked</p>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="show-notifications">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="setting">
+          <div class="setting-info">
+            <span>Auto-Update Blocklists</span>
+            <p class="setting-description">Automatically update blocking rules weekly</p>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="auto-update" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+      </section>
+
+      <!-- DATA MANAGEMENT -->
+      <section class="panel">
+        <h2>Data Management</h2>
+        
+        <div class="data-actions">
+          <button id="backup-data" class="btn btn-primary">Create Backup</button>
+          <button id="restore-data" class="btn btn-secondary">Restore Backup</button>
+          <button id="export-data" class="btn btn-secondary">Export Settings</button>
+          <button id="import-data" class="btn btn-secondary">Import Settings</button>
+          <button id="reset-data" class="btn btn-danger">Reset to Defaults</button>
+        </div>
+      </section>
+
+      <!-- BACKUP SETTINGS -->
+      <section class="panel">
+        <h2>Backup Settings</h2>
+
+        <div class="setting">
+          <div class="setting-info">
+            <span>Auto Backup</span>
+            <p class="setting-description">Automatically create backup every 7 days</p>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="auto-backup">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="setting">
+          <div class="setting-info">
+            <span>Emergency Backup</span>
+            <p class="setting-description">Create backup before major changes</p>
+          </div>
+          <button id="restore-emergency" class="btn btn-secondary btn-small">Restore Emergency</button>
+        </div>
+
+        <div class="setting">
+          <div class="setting-info">
+            <span>Backup History</span>
+            <p class="setting-description">View and manage backup history</p>
+          </div>
+          <button id="backup-history" class="btn btn-secondary btn-small">View History</button>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="settings.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>prAIvacy – Blocked Domains</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+  <div class="app">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <h2 class="logo">pr<span>AI</span>vacy</h2>
+      <nav>
+        <a href="dashboard.html" class="nav-link">Dashboard</a>
+        <a href="tracker.html" class="nav-link">Tracker Detection</a>
+        <a href="blocked.html" class="nav-link active">Blocked Domains</a>
+        <a href="report.html" class="nav-link">Privacy Report</a>
+        <a href="settings.html" class="nav-link">Settings</a>
+      </nav>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main">
+      <header class="header">
+        <h1>Blocked Domains</h1>
+        <p>Policy view - Domains prAIvacy is designed to block</p>
+      </header>
+
+      <!-- SEARCH AND FILTER -->
+      <section class="panel">
+        <h2>Domain Management</h2>
+        <div class="domain-controls">
+          <input type="text" id="blocked-domain-search" placeholder="Search blocked domains...">
+          <select id="blocked-category-filter">
+            <option value="">All Sources</option>
+            <option value="system">System Blocked</option>
+            <option value="user">User Added</option>
+            <option value="dynamic">Dynamic</option>
+            <option value="Advertisement">Advertisement</option>
+            <option value="Analytics">Analytics</option>
+            <option value="Social Media">Social Media</option>
+          </select>
+          <button id="export-blocked-list" class="btn btn-secondary">Export List</button>
+        </div>
+      </section>
+
+      <!-- BLOCKED DOMAINS LIST -->
+      <section class="panel">
+        <div class="blocked-domains-list" id="blocked-domains-list">
+          <div class="loading-state">
+            <div class="spinner"></div>
+            <p>Waiting for blocked domains data...</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- STATISTICS -->
+      <section class="stats">
+        <div class="card">
+          <h3>Total Blocked</h3>
+          <span class="stat" id="total-blocked-count">0</span>
+        </div>
+
+        <div class="card">
+          <h3>System Blocked</h3>
+          <span class="stat green" id="system-blocked-count">0</span>
+        </div>
+
+        <div class="card">
+          <h3>User Added</h3>
+          <span class="stat blue" id="user-blocked-count">0</span>
+        </div>
+      </section>
+
+      <!-- RISK BREAKDOWN -->
+      <section class="stats">
+        <div class="card">
+          <h3>High Risk</h3>
+          <span class="stat red" id="high-risk-count">0</span>
+        </div>
+
+        <div class="card">
+          <h3>Medium Risk</h3>
+          <span class="stat yellow" id="medium-risk-count">0</span>
+        </div>
+
+        <div class="card">
+          <h3>Low Risk</h3>
+          <span class="stat green" id="low-risk-count">0</span>
+        </div>
+      </section>
+
+      <!-- CATEGORY BREAKDOWN -->
+      <section class="panel">
+        <h2>Category Breakdown</h2>
+        <div class="category-stats" id="blocked-category-stats">
+          <!-- Will be populated by JavaScript -->
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="blocked.js"></script>
+</body>
+</html>

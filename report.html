@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>prAIvacy – Privacy Report</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+   <link rel="stylesheet" href="style.css" />
+   <script src="notification-manager.js"></script>
+   <script src="privacy-score.js"></script>
+</head>
+<body>
+
+  <div class="app">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <h2 class="logo">pr<span>AI</span>vacy</h2>
+
+      <nav>
+        <a href="dashboard.html" class="nav-link">Dashboard</a>
+        <a href="tracker.html" class="nav-link">Tracker Detection</a>
+        <a href="blocked.html" class="nav-link">Blocked Domains</a>
+        <a href="report.html" class="nav-link active">Privacy Report</a>
+        <a href="settings.html" class="nav-link">Settings</a>
+      </nav>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main">
+      <header class="header">
+        <h1>Privacy Report</h1>
+        <p>Detailed analysis of your privacy protection</p>
+      </header>
+
+      <!-- PRIVACY SCORE SECTION -->
+      <section class="privacy-score-section">
+        <div class="score-circle">
+          <div class="score-value" id="report-score">92%</div>
+          <div class="score-label">Overall Privacy Score</div>
+        </div>
+        <div class="score-description" id="score-description">Excellent protection</div>
+      </section>
+
+      <!-- STATISTICS GRID -->
+      <section class="stats-grid">
+        <div class="stat-card">
+          <h3>Total Trackers Blocked</h3>
+          <div class="stat-number" id="total-trackers">1,284</div>
+        </div>
+
+        <div class="stat-card">
+          <h3>Ads Prevented</h3>
+          <div class="stat-number" id="total-ads">3,912</div>
+        </div>
+
+        <div class="stat-card">
+          <h3>Cross-Site Attempts</h3>
+          <div class="stat-number" id="cross-site">187</div>
+        </div>
+
+        <div class="stat-card">
+          <h3>Data Saved (MB)</h3>
+          <div class="stat-number" id="data-saved">245</div>
+        </div>
+      </section>
+
+      <!-- PROTECTION BREAKDOWN -->
+      <section class="protection-breakdown">
+        <h2>Protection Breakdown</h2>
+        <div class="protection-item">
+          <span class="protection-label">Ad Trackers</span>
+          <span class="protection-status blocked">Blocked</span>
+        </div>
+        <div class="protection-item">
+          <span class="protection-label">Analytics Trackers</span>
+          <span class="protection-status blocked">Blocked</span>
+        </div>
+        <div class="protection-item">
+          <span class="protection-label">Social Media Trackers</span>
+          <span class="protection-status blocked">Blocked</span>
+        </div>
+        <div class="protection-item">
+          <span class="protection-label">Fingerprinting Attempts</span>
+          <span class="protection-status prevented">Prevented</span>
+        </div>
+      </section>
+
+      <!-- AI INSIGHTS SECTION -->
+      <section class="panel ai-insights">
+        <h2>🤖 AI Privacy Insights</h2>
+        <div class="insights-container" id="ai-insights">
+          <div class="insight-item">
+            <div class="insight-icon">🛡️</div>
+            <div class="insight-content">
+              <h4>Strong Privacy Protection</h4>
+              <p>You've blocked 1,284 trackers, which puts you in the top 15% of privacy-conscious users.</p>
+            </div>
+          </div>
+          
+          <div class="insight-item">
+            <div class="insight-icon">🎯</div>
+            <div class="insight-content">
+              <h4>Google Ecosystem Detected</h4>
+              <p>We blocked 12 Google tracking domains. Consider using privacy-focused alternatives for better protection.</p>
+            </div>
+          </div>
+          
+          <div class="insight-item">
+            <div class="insight-icon">📊</div>
+            <div class="insight-content">
+              <h4>Analytics Heavy Sites</h4>
+              <p>You visited 23 sites with heavy analytics tracking. Your blocking prevented 89% of data collection.</p>
+            </div>
+          </div>
+        </div>
+        
+        <button id="refresh-insights" class="btn btn-secondary">Refresh AI Insights</button>
+      </section>
+
+      <!-- TIME-BASED STATISTICS -->
+      <section class="panel">
+        <h2>Performance Over Time</h2>
+        <div class="time-stats">
+          <div class="time-period">
+            <h4>Last 24 Hours</h4>
+            <div class="period-stats">
+              <span>Trackers: <strong id="day-trackers">47</strong></span>
+              <span>Ads: <strong id="day-ads">156</strong></span>
+            </div>
+          </div>
+          
+          <div class="time-period">
+            <h4>Last 7 Days</h4>
+            <div class="period-stats">
+              <span>Trackers: <strong id="week-trackers">312</strong></span>
+              <span>Ads: <strong id="week-ads">892</strong></span>
+            </div>
+          </div>
+          
+          <div class="time-period">
+            <h4>Last 30 Days</h4>
+            <div class="period-stats">
+              <span>Trackers: <strong id="month-trackers">1,284</strong></span>
+              <span>Ads: <strong id="month-ads">3,912</strong></span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TOP BLOCKED DOMAINS -->
+      <section class="panel">
+        <h2>Top Blocked Domains</h2>
+        <div class="top-domains" id="top-domains">
+          <!-- Will be populated by JavaScript -->
+        </div>
+      </section>
+
+      <!-- EXPORT OPTIONS -->
+      <section class="panel">
+        <h2>Export Report</h2>
+        <div class="export-options">
+          <button id="export-pdf" class="btn btn-secondary">📄 Export as PDF</button>
+          <button id="export-csv" class="btn btn-secondary">📊 Export as CSV</button>
+          <button id="share-report" class="btn btn-primary">🔗 Share Report</button>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="report.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>prAIvacy – Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="style.css" />
+  <script src="db/indexedDb.js"></script>
+  <script src="privacy-score.js"></script>
+  <script src="notification-manager.js"></script>
+</head>
+
+<body>
+  <div class="app">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <h2 class="logo">pr<span>AI</span>vacy</h2>
+      <nav>
+        <a href="dashboard.html" class="nav-link active">Dashboard</a>
+        <a href="tracker.html" class="nav-link">Tracker Detection</a>
+        <a href="blocked.html" class="nav-link">Blocked Domains</a>
+        <a href="report.html" class="nav-link">Privacy Report</a>
+        <a href="settings.html" class="nav-link">Settings</a>
+      </nav>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main">
+      <header class="header">
+        <div class="header-content">
+          <div>
+            <h1>Dashboard</h1>
+            <p>Real-time privacy protection overview</p>
+          </div>
+          <div class="header-controls">
+            <button id="debug-btn" class="debug-btn">Debug</button>
+            <div class="power-control">
+              <label class="switch">
+                <input type="checkbox" id="protection-toggle" checked>
+                <span class="slider"></span>
+              </label>
+              <span class="power-label" id="power-status">Protected</span>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- STATS -->
+      <section class="stats">
+        <div class="card">
+          <h3>Trackers Blocked</h3>
+          <span class="stat" id="trackers-stat">0</span>
+        </div>
+
+        <div class="card">
+          <h3>Ads Blocked</h3>
+          <span class="stat" id="ads-stat">0</span>
+        </div>
+
+        <div class="card">
+          <h3>Domains Blocked</h3>
+          <span class="stat" id="domains-stat">0</span>
+        </div>
+
+        <div class="card">
+          <h3>Privacy Score</h3>
+          <span class="stat green" id="privacy-score">0%</span>
+        </div>
+      </section>
+
+      <!-- ACTIVITY -->
+      <section class="panel">
+        <h2>Recent Activity</h2>
+
+        <ul class="activity" id="activity-list">
+          <li>Waiting for tracker data...</li>
+        </ul>
+      </section>
+    </main>
+  </div>
+
+  <script src="dashboard.js"></script>
+</body>
+</html>

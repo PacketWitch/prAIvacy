@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>prAIvacy – Tracker Detection</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+  <div class="app">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <h2 class="logo">pr<span>AI</span>vacy</h2>
+      <nav>
+        <a href="dashboard.html" class="nav-link">Dashboard</a>
+        <a href="tracker.html" class="nav-link active">Tracker Detection</a>
+        <a href="blocked.html" class="nav-link">Blocked Domains</a>
+        <a href="report.html" class="nav-link">Privacy Report</a>
+        <a href="settings.html" class="nav-link">Settings</a>
+      </nav>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main">
+      <header class="header">
+        <h1>Tracker Detection</h1>
+        <p>Real-time tracking attempts blocked while browsing</p>
+      </header>
+
+      <!-- LIVE STATISTICS -->
+      <section class="stats">
+        <div class="card">
+          <h3>Total Blocked</h3>
+          <span class="stat" id="total-blocked">0</span>
+        </div>
+
+        <div class="card">
+          <h3>Trackers Blocked</h3>
+          <span class="stat green" id="total-trackers">0</span>
+        </div>
+
+        <div class="card">
+          <h3>Ads Blocked</h3>
+          <span class="stat red" id="total-ads">0</span>
+        </div>
+
+        <div class="card">
+          <h3>Update Status</h3>
+          <span class="stat blue" id="update-status">LIVE</span>
+        </div>
+      </section>
+
+      <!-- SEARCH AND FILTER -->
+      <section class="panel">
+        <h2>Recent Blocked Requests</h2>
+        <div class="tracker-controls">
+          <input type="text" id="tracker-search" placeholder="Search blocked domains...">
+          <select id="tracker-category-filter">
+            <option value="">All Categories</option>
+            <option value="Analytics">Analytics</option>
+            <option value="Social Media">Social Media</option>
+            <option value="Advertisement">Advertisement</option>
+            <option value="Tracking">Tracking</option>
+            <option value="Unknown">Unknown</option>
+          </select>
+          <button id="clear-tracker-history" class="btn btn-secondary">Clear History</button>
+        </div>
+      </section>
+
+      <!-- RECENT BLOCKED LIST -->
+      <section class="panel">
+        <div class="recent-blocked" id="recent-blocked">
+          <div class="loading-state">
+            <div class="spinner"></div>
+            <p>Waiting for tracker data...</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- VISITED DOMAINS LIST -->
+      <section class="panel">
+        <h2>Recently Visited Domains</h2>
+        <div class="visited-domains-list" id="visited-domains-list">
+          <div class="loading-state">
+            <div class="spinner"></div>
+            <p>Waiting for visited domains data...</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- EXPLANATION -->
+      <section class="panel info-panel">
+        <h2>📊 What This Shows</h2>
+        <div class="info-grid">
+          <div class="info-item">
+            <div class="info-icon">🎯</div>
+            <div class="info-content">
+              <h4>Real-time Blocking</h4>
+              <p>Shows actual trackers and ads blocked while you browse websites</p>
+            </div>
+          </div>
+          
+          <div class="info-item">
+            <div class="info-icon">🌐</div>
+            <div class="info-content">
+              <h4>Website Context</h4>
+              <p>Displays which websites attempted to load these tracking domains</p>
+            </div>
+          </div>
+          
+          <div class="info-item">
+            <div class="info-icon">⚡</div>
+            <div class="info-content">
+              <h4>Live Updates</h4>
+              <p>Updates every 500ms - see data as it happens in console!</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="tracker.js"></script>
+</body>
+</html>
